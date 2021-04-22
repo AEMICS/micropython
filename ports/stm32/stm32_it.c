@@ -296,7 +296,7 @@ void DebugMon_Handler(void) {
 /*  file (startup_stm32f4xx.s).                                               */
 /******************************************************************************/
 
-#if defined(STM32L0) || defined(STM32L432xx)
+#if defined(STM32L0) || defined(STM32L432xx) || defined(STM32G474xx)
 
 #if MICROPY_HW_USB_FS
 void USB_IRQHandler(void) {
@@ -340,6 +340,8 @@ void OTG_HS_IRQHandler(void) {
   * @param  *pcd_handle for FS or HS
   * @retval None
   */
+
+
 STATIC void OTG_CMD_WKUP_Handler(PCD_HandleTypeDef *pcd_handle) {
 
     if (pcd_handle->Init.low_power_enable) {

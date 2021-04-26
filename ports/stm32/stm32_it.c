@@ -297,7 +297,7 @@ void DebugMon_Handler(void) {
 /*  file (startup_stm32f4xx.s).                                               */
 /******************************************************************************/
 
-#if defined(STM32L0) || defined(STM32L432xx) || defined(STM32G473xx)
+#if defined(STM32L0) || defined(STM32L432xx)
 
 #if MICROPY_HW_USB_FS
 void USB_IRQHandler(void) {
@@ -305,7 +305,7 @@ void USB_IRQHandler(void) {
 }
 #endif
 
-#elif defined(STM32WB)
+#elif defined(STM32WB) || defined(STM32G473xx)
 
 #if MICROPY_HW_USB_FS
 void USB_LP_IRQHandler(void) {
@@ -335,14 +335,12 @@ void OTG_HS_IRQHandler(void) {
 }
 #endif
 
-#if MICROPY_HW_USB_FS || MICROPY_HW_USB_HS
+#if (MICROPY_HW_USB_FS || MICROPY_HW_USB_HS)
 /**
   * @brief  This function handles USB OTG Common FS/HS Wakeup functions.
   * @param  *pcd_handle for FS or HS
   * @retval None
   */
-
-
 STATIC void OTG_CMD_WKUP_Handler(PCD_HandleTypeDef *pcd_handle) {
 
     if (pcd_handle->Init.low_power_enable) {

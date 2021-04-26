@@ -391,7 +391,7 @@ HAL_SRC_C += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_,\
 	hal_uart.c \
 	)
 
-ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f4 f7 h7 l0 l4 wb))
+ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f4 f7 h7 l0 l4 wb g4))
 HAL_SRC_C += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_,\
 	ll_usb.c \
 	)
@@ -423,7 +423,7 @@ endif
 ifeq ($(CMSIS_MCU),$(filter $(CMSIS_MCU),STM32H743xx))
     HAL_SRC_C += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_, hal_fdcan.c)
 else
-ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f0 f4 f7 h7 l4))
+ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f0 f4 f7 h7 l4 g4))
     HAL_SRC_C += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_, hal_can.c)
 endif
 endif

@@ -297,7 +297,7 @@ void DebugMon_Handler(void) {
 /*  file (startup_stm32f4xx.s).                                               */
 /******************************************************************************/
 
-#if defined(STM32L0) || defined(STM32L432xx) || defined(STM32G474xx)
+#if defined(STM32L0) || defined(STM32L432xx) || defined(STM32G473xx)
 
 #if MICROPY_HW_USB_FS
 void USB_IRQHandler(void) {

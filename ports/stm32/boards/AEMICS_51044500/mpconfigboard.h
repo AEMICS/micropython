@@ -10,7 +10,7 @@
 #define MICROPY_HW_ENABLE_USB       (1)  // A12 (dp), A11 (dm)
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_LED          (1)
-#define MICROPY_HW_HAS_FLASH        (1)  // QSPI extflash mounted
+#define MICROPY_HW_HAS_FLASH        (0)  // QSPI extflash mounted
 
 #if MICROPY_HW_USB_FS == 1
 #ifdef USBD_MANUFACTURER_STRING

@@ -549,7 +549,7 @@
 #endif
 
 // Whether the USB peripheral is device-only, or multiple OTG
-#if defined(STM32L0) || defined(STM32L432xx) || defined(STM32WB) || defined(STM32G473xx)
+#if defined(STM32L0) || defined(STM32L432xx) || defined(STM32WB) || defined(STM32G4)
 #define MICROPY_HW_USB_IS_MULTI_OTG (0)
 #else
 #define MICROPY_HW_USB_IS_MULTI_OTG (1)

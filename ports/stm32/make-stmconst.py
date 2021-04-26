@@ -303,6 +303,7 @@ def main():
         "WWDG",
         "RNG",
         "IPCC",
+        "TSC",
     ):
         if reg in reg_defs:
             print_regs(reg, reg_defs[reg], needed_qstrs, needed_mpzs)

@@ -2,7 +2,7 @@
 MEMORY
 {
 RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 512K
+FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 128K
 FLASH_QSPI (rx) : ORIGIN = 0x90000000, LENGTH = 1M     /* external QSPI flash in XIP mode */
 /*FLASH_FS (rx)   : ORIGIN = 0x08058000, LENGTH = 160K  / * starting @ 352K * /*/
 }

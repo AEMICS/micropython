@@ -51,6 +51,8 @@ SECTIONS
     {
         . = ALIGN(4);
         *extmod/*(.text* .rodata*)
+        *lib/*(.text* .rodata*)
+        *py/*(.text* .rodata*)
         . = ALIGN(4);
     } >FLASH_QSPI
 

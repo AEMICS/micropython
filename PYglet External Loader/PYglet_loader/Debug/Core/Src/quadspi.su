@@ -1,0 +1,12 @@
+quadspi.c:33:6:MX_QUADSPI1_Init	8	static
+quadspi.c:62:6:HAL_QSPI_MspInit	48	static
+quadspi.c:104:6:HAL_QSPI_MspDeInit	16	static
+quadspi.c:137:1:CSP_QUADSPI_Init	8	static
+quadspi.c:170:1:CSP_QSPI_Erase_Chip	64	static
+quadspi.c:206:1:QSPI_AutoPollingMemReady	88	static
+quadspi.c:238:1:QSPI_WriteEnable	88	static
+quadspi.c:277:1:QSPI_Configuration	80	static,ignoring_inline_asm
+quadspi.c:362:1:CSP_QSPI_EraseSector	72	static
+quadspi.c:404:1:CSP_QSPI_WriteMemory	96	static
+quadspi.c:487:1:CSP_QSPI_EnableMemoryMappedMode	72	static
+quadspi.c:516:1:QSPI_ResetChip	72	static,ignoring_inline_asm

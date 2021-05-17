@@ -11,6 +11,7 @@
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_LED          (1)
 #define MICROPY_HW_HAS_FLASH        (0)  // QSPI extflash mounted
+#define MICROPY_HW_UART_REPL        (1)
 
 #if MICROPY_HW_USB_FS == 1
 #ifdef USBD_MANUFACTURER_STRING

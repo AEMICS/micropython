@@ -14,6 +14,9 @@
 #define MICROPY_HW_UART_REPL        (1)
 #define MICROPY_HW_UART_REPL_BAUD   (115200)
 
+#define MICROPY_BOARD_EARLY_INIT    board_early_init
+void board_early_init(void);
+
 #if MICROPY_HW_USB_FS == 1
 #ifdef USBD_MANUFACTURER_STRING
 #undef USBD_MANUFACTURER_STRING

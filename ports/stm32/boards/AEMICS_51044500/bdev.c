@@ -54,6 +54,11 @@ const mp_spiflash_config_t spiflash_config = {
 
 spi_bdev_t spi_bdev;
 
+void board_early_init(void) {
+    qspi_init();
+    qspi_memory_map();
+}
+
 // Second external SPI flash uses hardware QSPI interface
 
 // const mp_spiflash_config_t spiflash2_config = {

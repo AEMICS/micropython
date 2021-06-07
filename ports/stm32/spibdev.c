@@ -107,5 +107,55 @@ int spi_bdev_writeblocks_raw(spi_bdev_t *bdev, const uint8_t *src, uint32_t bloc
 
     return ret;
 }
-
 #endif
+
+/*
+*Micropython bindings
+*/
+STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    // pyb_flash_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // if (self == &pyb_flash_obj) {
+    //     mp_printf(print, "Flash()");
+    // } else {
+    //     mp_printf(print, "Flash(start=%u, len=%u)", self->start, self->len);
+    // }
+    return;
+}
+
+STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+    // spibdev_obj_t *self = m_new_obj(spibdev_obj_t);
+    // self->base.type = &pyb_spibdev_type;
+    // return MP_OBJ_FROM_PTR(self);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t pyb_spibdev_readblocks(size_t n_args, const mp_obj_t *args) {
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_readblocks_obj, 3, 4, pyb_spibdev_readblocks);
+
+STATIC mp_obj_t pyb_spibdev_writeblocks(size_t n_args, const mp_obj_t *args) {
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_writeblocks_obj, 3, 4, pyb_spibdev_writeblocks);
+
+STATIC mp_obj_t pyb_spibdev_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_ioctl_obj, pyb_spibdev_ioctl);
+
+STATIC const mp_rom_map_elem_t pyb_spibdev_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&pyb_spibdev_readblocks_obj) },
+    { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&pyb_spibdev_writeblocks_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&pyb_spibdev_ioctl_obj) },
+};
+
+STATIC MP_DEFINE_CONST_DICT(pyb_spibdev_locals_dict, pyb_spibdev_locals_dict_table);
+
+const mp_obj_type_t pyb_spibdev_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_Spibdev,
+    .print = pyb_spibdev_print,
+    .make_new = pyb_spibdev_make_new,
+    .locals_dict = (mp_obj_dict_t *)&pyb_spibdev_locals_dict,
+};

@@ -25,6 +25,8 @@
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_FLASH_FS_LABEL   "aemics"
 #define MICROPY_HW_STM32WB_FLASH_SYNCRONISATION (1)
+#define MICROPY_HW_SPIFLASH_ENABLE_CACHE    (1)
+#define MICROPY_HW_ENABLE_STORAGE   (1)
 
 // External HSE is 32MHz
 // Resulting core frequency is 64MHz:

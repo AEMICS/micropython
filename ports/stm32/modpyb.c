@@ -53,6 +53,7 @@
 #include "usb.h"
 #include "portmodules.h"
 #include "modmachine.h"
+#include "spibdev.c"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
 
@@ -256,6 +257,10 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
 
     #if MICROPY_HW_HAS_LCD
     { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&pyb_lcd_type) },
+    #endif
+
+    #if MICROPY_HW_ENABLE_STORAGE
+    { MP_ROM_QSTR(MP_QSTR_Spibdev), MP_ROM_PTR(&pyb_spibdev_type) }
     #endif
 };
 

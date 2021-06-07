@@ -53,7 +53,6 @@
 #include "usb.h"
 #include "portmodules.h"
 #include "modmachine.h"
-#include "spibdev.c"
 #include "extmod/vfs.h"
 #include "extmod/utime_mphal.h"
 

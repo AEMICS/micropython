@@ -112,6 +112,15 @@ int spi_bdev_writeblocks_raw(spi_bdev_t *bdev, const uint8_t *src, uint32_t bloc
 /*
 *Micropython bindings
 */
+
+typedef struct _pyb_spibdev_obj_t {
+    mp_obj_base_t base;
+    spi_bdev_t *bdev;
+    byte cmdbuf[6];
+    byte dummybuf[512];
+    byte tokenbuf;    
+} pyb_spibdev_obj_t;
+
 STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     // pyb_flash_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // if (self == &pyb_flash_obj) {
@@ -123,10 +132,10 @@ STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
 }
 
 STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    // spibdev_obj_t *self = m_new_obj(spibdev_obj_t);
-    // self->base.type = &pyb_spibdev_type;
-    // return MP_OBJ_FROM_PTR(self);
-    return mp_const_none;
+    pyb_spibdev_obj_t *self = m_new_obj(pyb_spibdev_obj_t);
+    self->base.type = &pyb_spibdev_type;
+    self->bdev = all_args[1];
+    return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t pyb_spibdev_readblocks(size_t n_args, const mp_obj_t *args) {

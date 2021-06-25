@@ -1,3 +1,5 @@
+DEBUG=1
+
 MCU_SERIES = wb
 CMSIS_MCU = STM32WB55xx
 AF_FILE = boards/stm32wb55_af.csv

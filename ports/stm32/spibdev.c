@@ -116,9 +116,6 @@ int spi_bdev_writeblocks_raw(spi_bdev_t *bdev, const uint8_t *src, uint32_t bloc
 typedef struct _pyb_spibdev_obj_t {
     mp_obj_base_t base;
     spi_bdev_t *bdev;
-    byte cmdbuf[6];
-    byte dummybuf[512];
-    byte tokenbuf;    
 } pyb_spibdev_obj_t;
 
 STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -134,34 +131,25 @@ STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
 STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     pyb_spibdev_obj_t *self = m_new_obj(pyb_spibdev_obj_t);
     self->base.type = &pyb_spibdev_type;
-    self->bdev = MP_OBJ_TO_PTR(all_args[0]);
-    // int buff = 0xFF;
 
-    // spi_bdev_writeblocks(self->bdev, buff, 0, 1);
+    if(n_args==1){
+    	self->bdev = MP_OBJ_TO_PTR(all_args[0]);
+    	spi_bdev_ioctl(self->bdev, BDEV_IOCTL_INIT, 0);
+    }
+    else{
+    	mp_raise_ValueError(NULL);
+    }
+
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t pyb_spibdev_readblocks(size_t n_args, const mp_obj_t *args) {
-    // pyb_spibdev_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    // uint32_t block_num = mp_obj_get_int(args[1]);
-    // mp_buffer_info_t bufinfo;
-    // mp_get_buffer_raise(args[2], &bufinfo, MP_BUFFER_WRITE);
-    // mp_uint_t ret = -MP_EIO;
-    // if (n_args == 3) {
-        // Cast self->start to signed in case it's pyb_flash_obj with negative start
-        // block_num += FLASH_PART1_START_BLOCK + (int32_t)self->start / FLASH_BLOCK_SIZE;
-        // ret = spi_bdev_read_blocks(bufinfo.buf, block_num, bufinfo.len / FLASH_BLOCK_SIZE);
-    // }
-    // #if defined(MICROPY_HW_BDEV_READBLOCKS_EXT)
-    // else if (self != &pyb_flash_obj) {
-    //     // Extended block read on a sub-section of the flash storage
-    //     uint32_t offset = mp_obj_get_int(args[3]);
-    //     block_num += self->start / PYB_FLASH_NATIVE_BLOCK_SIZE;
-    //     ret = MICROPY_HW_BDEV_READBLOCKS_EXT(bufinfo.buf, block_num, offset, bufinfo.len);
-    // }
-    // #endif
-    //return MP_OBJ_NEW_SMALL_INT(ret);
-    return mp_const_none;
+    pyb_spibdev_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    const uint8_t *buff[512];
+    uint32_t block_num = mp_obj_get_int(args[1]);
+    uint32_t num_blocks = mp_obj_get_int(args[2]);
+    int ret = spi_bdev_readblocks(self->bdev, buff, block_num, num_blocks);
+    return MP_OBJ_NEW_INT(buff);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_readblocks_obj, 3, 4, pyb_spibdev_readblocks);
 

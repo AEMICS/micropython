@@ -26,9 +26,15 @@
 
 #include "py/obj.h"
 #include "py/mperrno.h"
+#include "py/runtime.h"
+#include "spi.h"
+#include "drivers/memory/spiflash.h"
+
 #include "irq.h"
 #include "led.h"
 #include "storage.h"
+#include "pin.h"
+#include "sdcardio/SDCard.h"
 
 #if MICROPY_HW_ENABLE_STORAGE
 
@@ -129,27 +135,20 @@ STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
 }
 
 STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    pyb_spibdev_obj_t *self = m_new_obj(pyb_spibdev_obj_t);
-    self->base.type = &pyb_spibdev_type;
-
-    if(n_args==1){
-    	self->bdev = MP_OBJ_TO_PTR(all_args[0]);
-    	spi_bdev_ioctl(self->bdev, BDEV_IOCTL_INIT, 0);
-    }
-    else{
-    	mp_raise_ValueError(NULL);
-    }
-
+    machine_hard_spi_obj_t *spi = MP_OBJ_TO_PTR(all_args[0]);
+    pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
+	sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
+    common_hal_sdcardio_sdcard_construct(self, spi, pin, 500);
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t pyb_spibdev_readblocks(size_t n_args, const mp_obj_t *args) {
     pyb_spibdev_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    const uint8_t *buff[512];
+    uint8_t buff;
     uint32_t block_num = mp_obj_get_int(args[1]);
     uint32_t num_blocks = mp_obj_get_int(args[2]);
-    int ret = spi_bdev_readblocks(self->bdev, buff, block_num, num_blocks);
-    return MP_OBJ_NEW_INT(buff);
+    spi_bdev_readblocks(self->bdev, &buff, block_num, num_blocks);
+    return MP_OBJ_NEW_SMALL_INT(buff);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_readblocks_obj, 3, 4, pyb_spibdev_readblocks);
 

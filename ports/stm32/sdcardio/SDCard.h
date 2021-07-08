@@ -27,23 +27,26 @@
 #pragma once
 
 #include "py/obj.h"
-#include "py/objproperty.h"
+//#include "py/objproperty.h"
 #include "py/runtime.h"
 #include "py/objarray.h"
 
-#include "common-hal/busio/SPI.h"
-#include "common-hal/digitalio/DigitalInOut.h"
+//#include "common-hal/busio/SPI.h"
+//#include "common-hal/digitalio/DigitalInOut.h"
+
+#include "pin.h"
+#include "spi.h"
 
 typedef struct {
     mp_obj_base_t base;
-    busio_spi_obj_t *bus;
-    digitalio_digitalinout_obj_t cs;
+    machine_hard_spi_obj_t *bus;
+    pin_obj_t *cs;
     int cdv;
     int baudrate;
     uint32_t sectors;
 } sdcardio_sdcard_obj_t;
 
-void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, busio_spi_obj_t *spi, mcu_pin_obj_t *cs, int baudrate);
+void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, machine_hard_spi_obj_t *spi, pin_obj_t *cs, int baudrate);
 void common_hal_sdcardio_sdcard_deinit(sdcardio_sdcard_obj_t *self);
 void common_hal_sdcardio_sdcard_check_for_deinit(sdcardio_sdcard_obj_t *self);
 int common_hal_sdcardio_sdcard_get_blockcount(sdcardio_sdcard_obj_t *self);

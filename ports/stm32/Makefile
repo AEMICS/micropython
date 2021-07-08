@@ -1,6 +1,6 @@
 # Select the board to build for: if not given on the command line,
 # then default to PYBV10.
-BOARD ?= AEMICS_51044500
+BOARD ?= AEMICS_51041100
 
 # If the build directory is not given, make it reflect the board name.
 BUILD ?= build-$(BOARD)
@@ -340,6 +340,7 @@ SRC_C += \
 	servo.c \
 	dac.c \
 	adc.c \
+	sdcardio/SDCard.c \
 	$(wildcard $(BOARD_DIR)/*.c)
 
 SRC_CXX += \

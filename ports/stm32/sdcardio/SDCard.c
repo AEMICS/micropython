@@ -50,6 +50,23 @@
 #define TOKEN_STOP_TRAN (0xFD)
 #define TOKEN_DATA (0xFE)
 
+#define NO_SD_CARD -1
+#define COULDNT_DETERMINE_SD_CARD_VERSION -2
+#define NO_RESPONSE_FROM_SD_CARD -3
+#define SD_CARD_CSD_FORMAT_NOT_SUPPORTED -4
+#define CANT_SET_512_BLOCK_SIZE -5
+
+bool spi_write(spi_t *self, const uint8_t *data, size_t len) {
+    spi_transfer(self, len, data, NULL, SPI_TRANSFER_TIMEOUT(len));
+
+    return true;
+}
+
+bool spi_read(spi_t *self, uint8_t *data, size_t len, uint8_t write_value) {
+    spi_transfer(self->spi_dev, len, write_value, data, SPI_TRANSFER_TIMEOUT(len));
+    return true;
+}
+
 // STATIC bool lock_and_configure_bus(sdcardio_sdcard_obj_t *self) {
 //    if (!common_hal_busio_spi_try_lock(self->bus)) {
 //        return false;
@@ -65,14 +82,15 @@
 //    }
 // }
 
-// STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes) {
-//    uint8_t buf[] = {0xff};
-// //    common_hal_digitalio_digitalinout_set_value(&self->cs, true);
-//    mp_hal_pin_high(self->cs);
-//    for (int i = 0; i < bytes; i++) {
-//     //    common_hal_busio_spi_write(self->bus, buf, 1);
-//    }
-// }
+STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes) {
+   uint8_t buf[] = {0xff};
+//    common_hal_digitalio_digitalinout_set_value(&self->cs, true);
+   mp_hal_pin_high(self->cs);
+   for (int i = 0; i < bytes; i++) {
+    //    common_hal_busio_spi_write(self->bus, buf, 1);
+        spi_transfer(self->bus, 1, buf, NULL, SPI_TRANSFER_TIMEOUT(1));
+   }
+}
 
 //STATIC void extraclock_and_unlock_bus(sdcardio_sdcard_obj_t *self) {
 //    clock_card(self, 1);
@@ -94,71 +112,73 @@
 //    return (crc << 1) | 1;
 //}
 //
-//#define READY_TIMEOUT_NS (300 * 1000 * 1000) // 300ms
-//STATIC void wait_for_ready(sdcardio_sdcard_obj_t *self) {
-//    uint64_t deadline = common_hal_time_monotonic_ns() + READY_TIMEOUT_NS;
-//    while (common_hal_time_monotonic_ns() < deadline) {
-//        uint8_t b;
-//        common_hal_busio_spi_read(self->bus, &b, 1, 0xff);
-//        if (b == 0xff) {
-//            break;
-//        }
-//    }
-//}
-//
+#define READY_TIMEOUT_NS (300 * 1000 * 1000) // 300ms
+STATIC void wait_for_ready(sdcardio_sdcard_obj_t *self) {
+   uint64_t deadline = mp_hal_ticks_us() + READY_TIMEOUT_NS;
+   while (mp_hal_ticks_us() < deadline) {
+       uint8_t b;
+    //    common_hal_busio_spi_read(self->bus, &b, 1, 0xff);
+       spi_transfer(self->bus, 1, 0xFF, b, SPI_TRANSFER_TIMEOUT(1));
+       if (b == 0xff) {
+           break;
+       }
+   }
+}
+
 //// In Python API, defaults are response=None, data_block=True, wait=True
-//STATIC int cmd(sdcardio_sdcard_obj_t *self, int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait) {
-//    DEBUG_PRINT("cmd % 3d [%02x] arg=% 11d [%08x] len=%d%s%s\n", cmd, cmd, arg, arg, response_len, data_block ? " data" : "", wait ? " wait" : "");
-//    uint8_t cmdbuf[6];
-//    cmdbuf[0] = cmd | 0x40;
-//    cmdbuf[1] = (arg >> 24) & 0xff;
-//    cmdbuf[2] = (arg >> 16) & 0xff;
-//    cmdbuf[3] = (arg >> 8) & 0xff;
-//    cmdbuf[4] = arg & 0xff;
-//    cmdbuf[5] = CRC7(cmdbuf, 5);
-//
-//    if (wait) {
-//        wait_for_ready(self);
-//    }
-//
+STATIC int cmd(sdcardio_sdcard_obj_t *self, int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait) {
+   DEBUG_PRINT("cmd % 3d [%02x] arg=% 11d [%08x] len=%d%s%s\n", cmd, cmd, arg, arg, response_len, data_block ? " data" : "", wait ? " wait" : "");
+   uint8_t cmdbuf[6];
+   cmdbuf[0] = cmd | 0x40;
+   cmdbuf[1] = (arg >> 24) & 0xff;
+   cmdbuf[2] = (arg >> 16) & 0xff;
+   cmdbuf[3] = (arg >> 8) & 0xff;
+   cmdbuf[4] = arg & 0xff;
+   cmdbuf[5] = CRC7(cmdbuf, 5);
+
+   if (wait) {
+       wait_for_ready(self);
+   }
+
 //    common_hal_busio_spi_write(self->bus, cmdbuf, sizeof(cmdbuf));
-//
-//    // Wait for the response (response[7] == 0)
-//    bool response_received = false;
-//    for (int i = 0; i < CMD_TIMEOUT; i++) {
-//        common_hal_busio_spi_read(self->bus, cmdbuf, 1, 0xff);
-//        if ((cmdbuf[0] & 0x80) == 0) {
-//            response_received = true;
-//            break;
-//        }
-//    }
-//
-//    if (!response_received) {
-//        return -EIO;
-//    }
-//
-//    if (response_buf) {
-//
-//        if (data_block) {
-//            cmdbuf[1] = 0xff;
-//            do {
-//                // Wait for the start block byte
-//                common_hal_busio_spi_read(self->bus, cmdbuf + 1, 1, 0xff);
-//            } while (cmdbuf[1] != 0xfe);
-//        }
-//
-//        common_hal_busio_spi_read(self->bus, response_buf, response_len, 0xff);
-//
-//        if (data_block) {
-//            // Read and discard the CRC-CCITT checksum
-//            common_hal_busio_spi_read(self->bus, cmdbuf + 1, 2, 0xff);
-//        }
-//
-//    }
-//
-//    return cmdbuf[0];
-//}
-//
+   spi_transfer(self->bus, sizeof(cmdbuf), cmdbuf, NULL, SPI_TRANSFER_TIMEOUT(sizeof(cmdbuf)));
+
+   // Wait for the response (response[7] == 0)
+   bool response_received = false;
+   for (int i = 0; i < CMD_TIMEOUT; i++) {
+    //    common_hal_busio_spi_read(self->bus, cmdbuf, 1, 0xff);
+       if ((cmdbuf[0] & 0x80) == 0) {
+           response_received = true;
+           break;
+       }
+   }
+
+   if (!response_received) {
+       return -EIO;
+   }
+
+   if (response_buf) {
+
+       if (data_block) {
+           cmdbuf[1] = 0xff;
+           do {
+               // Wait for the start block byte
+               common_hal_busio_spi_read(self->bus, cmdbuf + 1, 1, 0xff);
+           } while (cmdbuf[1] != 0xfe);
+       }
+
+       common_hal_busio_spi_read(self->bus, response_buf, response_len, 0xff);
+
+       if (data_block) {
+           // Read and discard the CRC-CCITT checksum
+           common_hal_busio_spi_read(self->bus, cmdbuf + 1, 2, 0xff);
+       }
+
+   }
+
+   return cmdbuf[0];
+}
+
 //STATIC int block_cmd(sdcardio_sdcard_obj_t *self, int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait) {
 //    return cmd(self, cmd_, block * self->cdv, response_buf, response_len, true, true);
 //}
@@ -204,24 +224,25 @@
 //    return translate("timeout waiting for v2 card");
 // }
 
-// STATIC const compressed_string_t *init_card(sdcardio_sdcard_obj_t *self) {
-//    clock_card(self, 10);
+STATIC const int *init_card(sdcardio_sdcard_obj_t *self) {
+   clock_card(self, 10);
 
-// //   common_hal_digitalio_digitalinout_set_value(&self->cs, false);
-//     mp_hal_pin_high(self->cs)
-//    // CMD0: init card: should return _R1_IDLE_STATE (allow 5 attempts)
-//    {
-//        bool reached_idle_state = false;
-//        for (int i = 0; i < 5; i++) {
-//            if (cmd(self, 0, 0, NULL, 0, true, true) == R1_IDLE_STATE) {
-//                reached_idle_state = true;
-//                break;
-//            }
-//        }
-//        if (!reached_idle_state) {
-//            return translate("no SD card");
-//        }
-//    }
+//   common_hal_digitalio_digitalinout_set_value(&self->cs, false);
+   mp_hal_pin_low(self->cs);
+//  CMD0: init card: should return _R1_IDLE_STATE (allow 5 attempts)
+   {
+       bool reached_idle_state = false;
+       for (int i = 0; i < 5; i++) {
+           if (cmd(self, 0, 0, NULL, 0, true, true) == R1_IDLE_STATE) {
+               reached_idle_state = true;
+               break;
+           }
+       }
+       if (!reached_idle_state) {
+       //    return translate("no SD card");
+            return NO_SD_CARD;
+       }
+   }
 
 //    // CMD8: determine card version
 //    {
@@ -272,10 +293,12 @@
 //        }
 //    }
 
-//    return NULL;
-// }
+   return 0;
+}
 
 void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate) {
+//   common_hal_digitalio_digitalinout_construct(&self->cs, cs);
+//   common_hal_digitalio_digitalinout_switch_to_output(&self->cs, true, DRIVE_MODE_PUSH_PULL);
 	self->bus = bus;
 	self->cs = cs;
 	self->cdv = 512;
@@ -296,13 +319,13 @@ void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi
     init->CRCPolynomial = 7; // unused
     spi_init(self->bus, false);
 
-//   common_hal_digitalio_digitalinout_construct(&self->cs, cs);
-//   common_hal_digitalio_digitalinout_switch_to_output(&self->cs, true, DRIVE_MODE_PUSH_PULL);
+
 
 
 
 //    lock_bus_or_throw(self);
 //    const compressed_string_t *result = init_card(self);
+    int result = init_card(self);
 //    extraclock_and_unlock_bus(self);
 
 //    if (result != NULL) {

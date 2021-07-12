@@ -39,14 +39,14 @@
 
 typedef struct {
     mp_obj_base_t base;
-    machine_hard_spi_obj_t *bus;
+    const spi_t *bus;
     pin_obj_t *cs;
     int cdv;
     int baudrate;
     uint32_t sectors;
 } sdcardio_sdcard_obj_t;
 
-void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, machine_hard_spi_obj_t *spi, pin_obj_t *cs, int baudrate);
+void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi_t *spi, pin_obj_t *cs, int baudrate);
 void common_hal_sdcardio_sdcard_deinit(sdcardio_sdcard_obj_t *self);
 void common_hal_sdcardio_sdcard_check_for_deinit(sdcardio_sdcard_obj_t *self);
 int common_hal_sdcardio_sdcard_get_blockcount(sdcardio_sdcard_obj_t *self);

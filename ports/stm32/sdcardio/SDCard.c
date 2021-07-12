@@ -65,15 +65,14 @@
 //    }
 // }
 
-STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes) {
-   uint8_t buf[] = {0xff};
-//    common_hal_digitalio_digitalinout_set_value(&self->cs, true);
-   mp_hal_pin_high(self->cs);
-   for (int i = 0; i < bytes; i++) {
-    //    common_hal_busio_spi_write(self->bus, buf, 1);
-        
-   }
-}
+// STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes) {
+//    uint8_t buf[] = {0xff};
+// //    common_hal_digitalio_digitalinout_set_value(&self->cs, true);
+//    mp_hal_pin_high(self->cs);
+//    for (int i = 0; i < bytes; i++) {
+//     //    common_hal_busio_spi_write(self->bus, buf, 1);
+//    }
+// }
 
 //STATIC void extraclock_and_unlock_bus(sdcardio_sdcard_obj_t *self) {
 //    clock_card(self, 1);
@@ -205,43 +204,43 @@ STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes) {
 //    return translate("timeout waiting for v2 card");
 // }
 
-STATIC const compressed_string_t *init_card(sdcardio_sdcard_obj_t *self) {
-   clock_card(self, 10);
+// STATIC const compressed_string_t *init_card(sdcardio_sdcard_obj_t *self) {
+//    clock_card(self, 10);
 
-//   common_hal_digitalio_digitalinout_set_value(&self->cs, false);
-    mp_hal_pin_high(self->cs)
-   // CMD0: init card: should return _R1_IDLE_STATE (allow 5 attempts)
-   {
-       bool reached_idle_state = false;
-       for (int i = 0; i < 5; i++) {
-           if (cmd(self, 0, 0, NULL, 0, true, true) == R1_IDLE_STATE) {
-               reached_idle_state = true;
-               break;
-           }
-       }
-       if (!reached_idle_state) {
-           return translate("no SD card");
-       }
-   }
+// //   common_hal_digitalio_digitalinout_set_value(&self->cs, false);
+//     mp_hal_pin_high(self->cs)
+//    // CMD0: init card: should return _R1_IDLE_STATE (allow 5 attempts)
+//    {
+//        bool reached_idle_state = false;
+//        for (int i = 0; i < 5; i++) {
+//            if (cmd(self, 0, 0, NULL, 0, true, true) == R1_IDLE_STATE) {
+//                reached_idle_state = true;
+//                break;
+//            }
+//        }
+//        if (!reached_idle_state) {
+//            return translate("no SD card");
+//        }
+//    }
 
-   // CMD8: determine card version
-   {
-       uint8_t rb7[4];
-       int response = cmd(self, 8, 0x1AA, rb7, sizeof(rb7), false, true);
-       if (response == R1_IDLE_STATE) {
-           const compressed_string_t *result = init_card_v2(self);
-           if (result != NULL) {
-               return result;
-           }
-       } else if (response == (R1_IDLE_STATE | R1_ILLEGAL_COMMAND)) {
-           const compressed_string_t *result = init_card_v1(self);
-           if (result != NULL) {
-               return result;
-           }
-       } else {
-           return translate("couldn't determine SD card version");
-       }
-   }
+//    // CMD8: determine card version
+//    {
+//        uint8_t rb7[4];
+//        int response = cmd(self, 8, 0x1AA, rb7, sizeof(rb7), false, true);
+//        if (response == R1_IDLE_STATE) {
+//            const compressed_string_t *result = init_card_v2(self);
+//            if (result != NULL) {
+//                return result;
+//            }
+//        } else if (response == (R1_IDLE_STATE | R1_ILLEGAL_COMMAND)) {
+//            const compressed_string_t *result = init_card_v1(self);
+//            if (result != NULL) {
+//                return result;
+//            }
+//        } else {
+//            return translate("couldn't determine SD card version");
+//        }
+//    }
 // 
 //    // CMD9: get number of sectors
 //    {
@@ -276,18 +275,34 @@ STATIC const compressed_string_t *init_card(sdcardio_sdcard_obj_t *self) {
 //    return NULL;
 // }
 
-void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, machine_hard_spi_obj_t *bus, pin_obj_t *cs, int baudrate) {
-   self->bus = bus;
-   self->cs = cs;
+void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate) {
+	self->bus = bus;
+	self->cs = cs;
+	self->cdv = 512;
+	self->sectors = 0;
+	self->baudrate = 250000;
+	/*!< SPI configuration */
+    SPI_InitTypeDef *init = &self->bus->spi->Init;
+    init->Mode = SPI_MODE_MASTER;
+    init->Direction = SPI_DIRECTION_2LINES;
+    init->DataSize = SPI_DATASIZE_8BIT;
+    init->CLKPolarity = SPI_POLARITY_LOW; // clock is low when idle
+    init->CLKPhase = SPI_PHASE_1EDGE; // data latched on first edge, which is rising edge for low-idle
+    init->NSS = SPI_NSS_SOFT;
+    init->BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2; // clock freq = f_PCLK / this_prescale_value; Wiz820i can do up to 80MHz
+    init->FirstBit = SPI_FIRSTBIT_MSB;
+    init->TIMode = SPI_TIMODE_DISABLED;
+    init->CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+    init->CRCPolynomial = 7; // unused
+    spi_init(self->bus, false);
+
 //   common_hal_digitalio_digitalinout_construct(&self->cs, cs);
 //   common_hal_digitalio_digitalinout_switch_to_output(&self->cs, true, DRIVE_MODE_PUSH_PULL);
 
-   self->cdv = 512;
-   self->sectors = 0;
-   self->baudrate = 250000;
+
 
 //    lock_bus_or_throw(self);
-   const compressed_string_t *result = init_card(self);
+//    const compressed_string_t *result = init_card(self);
 //    extraclock_and_unlock_bus(self);
 
 //    if (result != NULL) {

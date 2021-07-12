@@ -135,7 +135,8 @@ STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
 }
 
 STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    machine_hard_spi_obj_t *spi = MP_OBJ_TO_PTR(all_args[0]);
+    // machine_hard_spi_obj_t *spi = MP_OBJ_TO_PTR(all_args[0]);
+    const spi_t *spi = spi_from_mp_obj(all_args[0]);
     pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
 	sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
     common_hal_sdcardio_sdcard_construct(self, spi, pin, 500);

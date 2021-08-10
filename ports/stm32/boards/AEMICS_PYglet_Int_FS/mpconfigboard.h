@@ -1,6 +1,6 @@
-#define MICROPY_HW_BOARD_NAME       "AEMICS PYglet with Internal File System"
+#define MICROPY_HW_BOARD_NAME       "AEMICS PYglet"
 #define MICROPY_HW_MCU_NAME         "STM32G473"
-#define MICROPY_HW_FLASH_FS_LABEL   "aemics"
+#define MICROPY_HW_FLASH_FS_LABEL   "PYglet"
 
 #define MICROPY_HW_USB_FS           (0)
 #define MICROPY_HW_ENABLE_RTC       (0)
@@ -10,8 +10,7 @@
 #define MICROPY_HW_ENABLE_USB       (0)  // A12 (dp), A11 (dm)
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_LED          (1)
-#define MICROPY_HW_HAS_FLASH        (1)  // QSPI extflash mounted
-//#define MICROPY_HW_FLASH_FS_LABEL   "PYglet"
+#define MICROPY_HW_HAS_FLASH        (0)  // QSPI extflash not mounted
 #define MICROPY_HW_UART_REPL        (PYB_UART_4)
 #define MICROPY_HW_UART_REPL_BAUD   (115200)
 
@@ -44,6 +43,7 @@ void board_early_init(void);
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
 
 // The board has an 24MHz HSE, the following gives 170MHz CPU speed
+#define MICROPY_HW_CLK_USE_LSE      (0)
 #define MICROPY_HW_CLK_USE_HSE      (0)
 #define MICROPY_HW_CLK_USE_HSI (1)
 #define MICROPY_HW_CLK_PLLM (6)
@@ -65,29 +65,6 @@ void board_early_init(void);
 #define MICROPY_HW_SPI2_SCK         (pin_B13)
 #define MICROPY_HW_SPI2_MISO        (pin_B14)
 #define MICROPY_HW_SPI2_MOSI        (pin_B15)
-//QSPI1
-// 8MBit external QSPI flash, used for either the filesystem or XIP memory mapped
-#define MICROPY_HW_QSPIFLASH_SIZE_BITS_LOG2 (23)
-#define MICROPY_HW_QSPIFLASH_CS     (pin_A2)
-#define MICROPY_HW_QSPIFLASH_SCK    (pin_A3)
-#define MICROPY_HW_QSPIFLASH_IO0    (pin_B1)
-#define MICROPY_HW_QSPIFLASH_IO1    (pin_B0)
-#define MICROPY_HW_QSPIFLASH_IO2    (pin_A7)
-#define MICROPY_HW_QSPIFLASH_IO3    (pin_A6)
-extern const struct _mp_spiflash_config_t spiflash_config;
-extern struct _spi_bdev_t spi_bdev;
-#if !USE_QSPI_XIP
-#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (0)
-#define MICROPY_HW_SPIFLASH_ENABLE_CACHE (1)
-#define MICROPY_HW_BDEV_IOCTL(op, arg) ( \
-    (op) == BDEV_IOCTL_NUM_BLOCKS ? ((1 << MICROPY_HW_QSPIFLASH_SIZE_BITS_LOG2) / 8 / FLASH_BLOCK_SIZE) : \
-    (op) == BDEV_IOCTL_INIT ? spi_bdev_ioctl(&spi_bdev, (op), (uint32_t)&spiflash_config) : \
-    spi_bdev_ioctl(&spi_bdev, (op), (arg)) \
-)
-#define MICROPY_HW_BDEV_READBLOCKS(dest, bl, n) spi_bdev_readblocks(&spi_bdev, (dest), (bl), (n))
-#define MICROPY_HW_BDEV_WRITEBLOCKS(src, bl, n) spi_bdev_writeblocks(&spi_bdev, (src), (bl), (n))
-#define MICROPY_HW_BDEV_SPIFLASH_EXTENDED (&spi_bdev) // for extended block protocol
-#endif
 
 // USRSW has pullup, pressing the switch makes the input go low
 #define MICROPY_HW_USRSW_PIN        (pin_B8)

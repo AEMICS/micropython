@@ -827,7 +827,7 @@ void USART3_IRQHandler(void) {
 }
 #endif
 
-#if defined(USART4)
+#if defined(USART4) || defined(UART4)
 void UART4_IRQHandler(void) {
     IRQ_ENTER(UART4_IRQn);
     uart_irq_handler(4);

@@ -2,7 +2,7 @@
 MEMORY
 {
 RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 128K
+FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 512K
 FLASH_QSPI (rx) : ORIGIN = 0x90000000, LENGTH = 1M     /* external QSPI flash in XIP mode */
 /*FLASH_FS (rx)   : ORIGIN = 0x08058000, LENGTH = 160K  / * starting @ 352K * /*/
 }
@@ -47,14 +47,14 @@ ENTRY(Reset_Handler)
 SECTIONS
 {
     /* Define the code that goes in QSPI flash */
-    .text_qspi :
+    /* .text_qspi :
     {
         . = ALIGN(4);
         *extmod/*(.text* .rodata*)
         *lib/*(.text* .rodata*)
         *py/*(.text* .rodata*)
         . = ALIGN(4);
-    } >FLASH_QSPI
+    } >FLASH_QSPI */
 
     /* The startup code goes first into FLASH */
     .isr_vector :

@@ -1,4 +1,4 @@
-#define MICROPY_HW_BOARD_NAME       "AEMICS PYglet with Internal File System"
+#define MICROPY_HW_BOARD_NAME       "AEMICS PYglet"
 #define MICROPY_HW_MCU_NAME         "STM32G473"
 #define MICROPY_HW_FLASH_FS_LABEL   "aemics"
 

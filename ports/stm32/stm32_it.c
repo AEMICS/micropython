@@ -305,7 +305,7 @@ void USB_IRQHandler(void) {
 }
 #endif
 
-#elif defined(STM32WB)
+#elif defined(STM32WB) || defined(STM32G473xx)
 
 #if MICROPY_HW_USB_FS
 void USB_LP_IRQHandler(void) {
@@ -335,7 +335,7 @@ void OTG_HS_IRQHandler(void) {
 }
 #endif
 
-#if MICROPY_HW_USB_FS || MICROPY_HW_USB_HS
+#if (MICROPY_HW_USB_FS || MICROPY_HW_USB_HS)
 /**
   * @brief  This function handles USB OTG Common FS/HS Wakeup functions.
   * @param  *pcd_handle for FS or HS
@@ -827,7 +827,7 @@ void USART3_IRQHandler(void) {
 }
 #endif
 
-#if defined(USART4)
+#if defined(USART4) || defined(UART4)
 void UART4_IRQHandler(void) {
     IRQ_ENTER(UART4_IRQn);
     uart_irq_handler(4);

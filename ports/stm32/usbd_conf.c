@@ -68,14 +68,18 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
         const uint32_t otg_alt = GPIO_AF10_USB_FS;
         #elif defined(STM32WB)
         const uint32_t otg_alt = GPIO_AF10_USB;
+        #elif defined(STM32G473xx)
+
         #else
         const uint32_t otg_alt = GPIO_AF10_OTG_FS;
         #endif
 
+        #if !defined(STM32G473xx)
         mp_hal_pin_config(pin_A11, MP_HAL_PIN_MODE_ALT, MP_HAL_PIN_PULL_NONE, otg_alt);
         mp_hal_pin_config_speed(pin_A11, GPIO_SPEED_FREQ_VERY_HIGH);
         mp_hal_pin_config(pin_A12, MP_HAL_PIN_MODE_ALT, MP_HAL_PIN_PULL_NONE, otg_alt);
         mp_hal_pin_config_speed(pin_A12, GPIO_SPEED_FREQ_VERY_HIGH);
+        #endif
 
         #if defined(MICROPY_HW_USB_VBUS_DETECT_PIN)
         // USB VBUS detect pin is always A9
@@ -120,6 +124,10 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
         HAL_NVIC_EnableIRQ(USB_FS_IRQn);
         #elif defined(STM32WB)
         NVIC_SetPriority(USB_LP_IRQn, IRQ_PRI_OTG_FS);
+        HAL_NVIC_EnableIRQ(USB_LP_IRQn);
+        #elif defined(STM32G473xx)
+        uint32_t prioritygroup = NVIC_GetPriorityGrouping();
+        NVIC_SetPriority(USB_LP_IRQn, NVIC_EncodePriority(prioritygroup, 0, 0));
         HAL_NVIC_EnableIRQ(USB_LP_IRQn);
         #else
         NVIC_SetPriority(OTG_FS_IRQn, IRQ_PRI_OTG_FS);

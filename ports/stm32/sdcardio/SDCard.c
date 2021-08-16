@@ -374,6 +374,7 @@ STATIC const int init_card(sdcardio_sdcard_obj_t *self)
         else
         {
             // return translate("couldn't determine SD card version");
+        	mp_printf(&mp_plat_print, "couldn't determine card version\n");
             return COULDNT_DETERMINE_SD_CARD_VERSION;
         }
     }
@@ -386,12 +387,14 @@ STATIC const int init_card(sdcardio_sdcard_obj_t *self)
         {
             //    return translate("no response from SD card");
             return NO_RESPONSE_FROM_SD_CARD;
+            mp_printf(&mp_plat_print, "no response from SD card\n");
         }
         int csd_version = (csd[0] & 0xC0) >> 6;
         if (csd_version >= 2)
         {
             // return translate("SD card CSD format not supported");
             return SD_CARD_CSD_FORMAT_NOT_SUPPORTED;
+            mp_printf(&mp_plat_print, "sd card csd format not supported\n");
         }
 
         if (csd_version == 1)

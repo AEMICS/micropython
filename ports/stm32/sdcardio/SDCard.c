@@ -57,6 +57,7 @@
 #define CANT_SET_512_BLOCK_SIZE -5
 #define TIMEOUT_WAITING_FOR_V1_CARD -6
 #define TIMEOUT_WAITING_FOR_V2_CARD -7
+#define BUFFER_LENGTH_MUST_BE_A_MULTIPLE_OF_512 -8
 
 bool spi_write(sdcardio_sdcard_obj_t *self, const uint8_t *data, size_t len)
 {
@@ -553,19 +554,23 @@ int readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info
     }
     return 0;
 }
-//
-//int common_hal_sdcardio_sdcard_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-//    common_hal_sdcardio_check_for_deinit(self);
-//    if (buf->len % 512 != 0) {
-//        mp_raise_ValueError(translate("Buffer length must be a multiple of 512"));
-//    }
-//
+
+int common_hal_sdcardio_sdcard_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
+    common_hal_sdcardio_check_for_deinit(self);
+    if (buf->len % 512 != 0) {
+    	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
+    	mp_raise_msg(&mp_type_OSError, NULL);
+    }
+
 //    lock_and_configure_bus(self);
-//    int r = readblocks(self, start_block, buf);
+    mp_hal_pin_low(self->cs);
+    int r = readblocks(self, start_block, buf);
+    mp_hal_pin_high(self->cs);
+    clock_card(self, 1);
 //    extraclock_and_unlock_bus(self);
-//    return r;
-//}
-//
+    return r;
+}
+
 //STATIC int _write(sdcardio_sdcard_obj_t *self, uint8_t token, void *buf, size_t size) {
 //    wait_for_ready(self);
 //

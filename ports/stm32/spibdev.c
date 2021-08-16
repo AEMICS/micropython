@@ -138,29 +138,33 @@ STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, s
     // machine_hard_spi_obj_t *spi = MP_OBJ_TO_PTR(all_args[0]);
     const spi_t *spi = spi_from_mp_obj(all_args[0]);
     pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
-	sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
+    sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
+	self->base.type = &pyb_spibdev_type;
     common_hal_sdcardio_sdcard_construct(self, spi, pin, 500);
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t pyb_spibdev_readblocks(mp_obj_t self_in, mp_obj_t block_n, mp_obj_t n_blocks) {
-    pyb_spibdev_obj_t *self = MP_OBJ_TO_PTR(self_in);
+	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t buff[512];
     uint32_t block_num = mp_obj_get_int(block_n);
-    uint32_t num_blocks = mp_obj_get_int(n_blocks);
-    spi_bdev_readblocks(self->bdev, buff, block_num, num_blocks);
+//    uint32_t num_blocks = mp_obj_get_int(n_blocks);
+    mp_buffer_info_t buf;
+    buf.buf = buff;
+    buf.len = 512;
+    common_hal_sdcardio_sdcard_readblocks(self, block_num, &buf);
     return mp_obj_new_bytearray(512, buff);
 }
 //STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_readblocks_obj, 3, 4, pyb_spibdev_readblocks);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_readblocks_obj, pyb_spibdev_readblocks);
 
 STATIC mp_obj_t pyb_spibdev_writeblocks(size_t n_args, const mp_obj_t *args) {
-    pyb_spibdev_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    const uint8_t *src = MP_OBJ_TO_PTR(args[1]);
-    uint32_t block_num = mp_obj_get_int(args[2]);
-    uint32_t num_blocks = mp_obj_get_int(args[3]);
-    int ret = spi_bdev_writeblocks(self->bdev, src, block_num, num_blocks);
-    return MP_OBJ_NEW_SMALL_INT(ret);
+//	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+//    const uint8_t *src = MP_OBJ_TO_PTR(args[1]);
+//    uint32_t block_num = mp_obj_get_int(args[2]);
+//    uint32_t num_blocks = mp_obj_get_int(args[3]);
+//    int ret = spi_bdev_writeblocks(self->bdev, src, block_num, num_blocks);
+    return MP_OBJ_NEW_SMALL_INT(0);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_writeblocks_obj, 3, 4, pyb_spibdev_writeblocks);
 
@@ -176,7 +180,6 @@ STATIC const mp_rom_map_elem_t pyb_spibdev_locals_dict_table[] = {
      { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&pyb_spibdev_ioctl_obj) },
 };
 
-
 STATIC MP_DEFINE_CONST_DICT(pyb_spibdev_locals_dict, pyb_spibdev_locals_dict_table);
 
 const mp_obj_type_t pyb_spibdev_type = {
@@ -184,6 +187,5 @@ const mp_obj_type_t pyb_spibdev_type = {
     .name = MP_QSTR_Spibdev,
     .print = pyb_spibdev_print,
     .make_new = pyb_spibdev_make_new,
-	.protocol = NULL,
     .locals_dict = (mp_obj_dict_t *)&pyb_spibdev_locals_dict,
 };

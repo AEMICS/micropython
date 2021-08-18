@@ -206,7 +206,7 @@ void SystemClock_Config(void) {
     #endif
 
     /* Enable HSE Oscillator and activate PLL with HSE as source */
-    #if defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(STM32G4)
+    #if defined(STM32F4) || defined(STM32F7) || defined(STM32H7)
     RCC_OscInitStruct.OscillatorType = MICROPY_HW_RCC_OSCILLATOR_TYPE;
     RCC_OscInitStruct.HSEState = MICROPY_HW_RCC_HSE_STATE;
     RCC_OscInitStruct.HSIState = MICROPY_HW_RCC_HSI_STATE;
@@ -242,6 +242,26 @@ void SystemClock_Config(void) {
     #endif
 
     #endif
+
+    #if defined(STM32G4)
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    #if MICROPY_HW_CLK_USE_HSI && MICROPY_HW_CLK_USE_HSI48
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI | RCC_OSCILLATORTYPE_HSI48;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    #else
+    RCC_OscInitStruct.OscillatorType = MICROPY_HW_RCC_OSCILLATOR_TYPE;
+    RCC_OscInitStruct.HSEState = MICROPY_HW_RCC_HSE_STATE;
+    RCC_OscInitStruct.HSIState = MICROPY_HW_RCC_HSI_STATE;
+    #endif
+    RCC_OscInitStruct.PLL.PLLM = MICROPY_HW_CLK_PLLM;
+    RCC_OscInitStruct.PLL.PLLN = MICROPY_HW_CLK_PLLN;
+    RCC_OscInitStruct.PLL.PLLP = MICROPY_HW_CLK_PLLP;
+    RCC_OscInitStruct.PLL.PLLQ = MICROPY_HW_CLK_PLLQ;
+    RCC_OscInitStruct.PLL.PLLR = MICROPY_HW_CLK_PLLR;
+    #endif
+
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
      clocks dividers */
@@ -365,7 +385,8 @@ void SystemClock_Config(void) {
 
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC | RCC_PERIPHCLK_LPUART1
         | RCC_PERIPHCLK_RNG | RCC_PERIPHCLK_ADC12
-        | RCC_PERIPHCLK_FDCAN;
+        | RCC_PERIPHCLK_FDCAN | RCC_PERIPHCLK_USB;
+    PeriphClkInitStruct.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
     PeriphClkInitStruct.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
     PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_HSE;
     PeriphClkInitStruct.RngClockSelection = RCC_RNGCLKSOURCE_HSI48;

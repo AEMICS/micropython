@@ -1,19 +1,16 @@
 #define MICROPY_HW_BOARD_NAME       "AEMICS PYglet"
 #define MICROPY_HW_MCU_NAME         "STM32G473"
-#define MICROPY_HW_FLASH_FS_LABEL   "aemics"
+#define MICROPY_HW_FLASH_FS_LABEL   "PYglet"
 
-#define MICROPY_HW_USB_FS           (0)
+#define MICROPY_HW_USB_FS           (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
 #define MICROPY_HW_ENABLE_RNG       (0)
 #define MICROPY_HW_ENABLE_ADC       (1)
 #define MICROPY_HW_ENABLE_DAC       (1)  // A4, A5
-#define MICROPY_HW_ENABLE_USB       (0)  // A12 (dp), A11 (dm)
+#define MICROPY_HW_ENABLE_USB       (1)  // A12 (dp), A11 (dm)
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_LED          (1)
 #define MICROPY_HW_HAS_FLASH        (1)  // QSPI extflash mounted
-//#define MICROPY_HW_FLASH_FS_LABEL   "PYglet"
-#define MICROPY_HW_UART_REPL        (PYB_UART_4)
-#define MICROPY_HW_UART_REPL_BAUD   (115200)
 
 #define MICROPY_BOARD_EARLY_INIT    board_early_init
 void board_early_init(void);
@@ -43,14 +40,16 @@ void board_early_init(void);
 #define MICROPY_PY_NETWORK   (0)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
 
-// The board has an 24MHz HSE, the following gives 170MHz CPU speed
+// The board has an 16MHz HSI, the following gives 170MHz CPU speed and 48MHz for USB
 #define MICROPY_HW_CLK_USE_HSE      (0)
 #define MICROPY_HW_CLK_USE_HSI (1)
-#define MICROPY_HW_CLK_PLLM (6)
+#define MICROPY_HW_CLK_PLLM (4)
 #define MICROPY_HW_CLK_PLLN (85)
 #define MICROPY_HW_CLK_PLLP (2)
 #define MICROPY_HW_CLK_PLLQ (2)
 #define MICROPY_HW_CLK_PLLR (2)
+
+#define MICROPY_HW_CLK_USE_HSI48      (1)
 
 // 4 wait states
 #define MICROPY_HW_FLASH_LATENCY    FLASH_LATENCY_8

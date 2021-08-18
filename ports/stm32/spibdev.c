@@ -166,7 +166,7 @@ STATIC mp_obj_t pyb_spibdev_writeblocks(mp_obj_t self_in, mp_obj_t start_block_i
     mp_buffer_info_t buf;
     mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
 
-    int result = common_hal_sdcardio_sdcard_readblocks(self, block_num, &buf);
+    int result = common_hal_sdcardio_sdcard_writeblocks(self, block_num, &buf);
     if (result < 0) {
         mp_raise_OSError(-result);
     }

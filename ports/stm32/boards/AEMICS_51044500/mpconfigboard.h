@@ -4,7 +4,7 @@
 
 #define MICROPY_HW_USB_FS           (1)
 #define MICROPY_HW_ENABLE_RTC       (0)
-#define MICROPY_HW_ENABLE_RNG       (0)
+#define MICROPY_HW_ENABLE_RNG       (1)
 #define MICROPY_HW_ENABLE_ADC       (1)
 #define MICROPY_HW_ENABLE_DAC       (1)  // A4, A5
 #define MICROPY_HW_ENABLE_USB       (1)  // A12 (dp), A11 (dm)

@@ -144,29 +144,35 @@ STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, s
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pyb_spibdev_readblocks(mp_obj_t self_in, mp_obj_t block_n, mp_obj_t n_blocks) {
+STATIC mp_obj_t pyb_spibdev_readblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
 	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t buff[512];
-    uint32_t block_num = mp_obj_get_int(block_n);
-//    uint32_t num_blocks = mp_obj_get_int(n_blocks);
+    uint32_t block_num = mp_obj_get_int(start_block_in);
     mp_buffer_info_t buf;
-    buf.buf = buff;
-    buf.len = 512;
-    common_hal_sdcardio_sdcard_readblocks(self, block_num, &buf);
-    return mp_obj_new_bytearray(512, buff);
+    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
+
+    int result = common_hal_sdcardio_sdcard_readblocks(self, block_num, &buf);
+    if (result < 0) {
+        mp_raise_OSError(-result);
+    }
+    return mp_const_none;
 }
 //STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_readblocks_obj, 3, 4, pyb_spibdev_readblocks);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_readblocks_obj, pyb_spibdev_readblocks);
 
-STATIC mp_obj_t pyb_spibdev_writeblocks(size_t n_args, const mp_obj_t *args) {
-//	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-//    const uint8_t *src = MP_OBJ_TO_PTR(args[1]);
-//    uint32_t block_num = mp_obj_get_int(args[2]);
-//    uint32_t num_blocks = mp_obj_get_int(args[3]);
-//    int ret = spi_bdev_writeblocks(self->bdev, src, block_num, num_blocks);
-    return MP_OBJ_NEW_SMALL_INT(0);
+STATIC mp_obj_t pyb_spibdev_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
+	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    uint32_t block_num = mp_obj_get_int(start_block_in);
+    mp_buffer_info_t buf;
+    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
+
+    int result = common_hal_sdcardio_sdcard_readblocks(self, block_num, &buf);
+    if (result < 0) {
+        mp_raise_OSError(-result);
+    }
+    return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_writeblocks_obj, 3, 4, pyb_spibdev_writeblocks);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_writeblocks_obj, pyb_spibdev_writeblocks);
 
 STATIC mp_obj_t pyb_spibdev_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
 //    return mp_const_none;

@@ -34,7 +34,6 @@
 #include "led.h"
 #include "storage.h"
 #include "pin.h"
-#include "sdcardio/SDCard.h"
 
 #if MICROPY_HW_ENABLE_STORAGE
 
@@ -114,84 +113,3 @@ int spi_bdev_writeblocks_raw(spi_bdev_t *bdev, const uint8_t *src, uint32_t bloc
     return ret;
 }
 #endif
-
-/*
-*Micropython bindings
-*/
-
-typedef struct _pyb_spibdev_obj_t {
-    mp_obj_base_t base;
-    spi_bdev_t *bdev;
-} pyb_spibdev_obj_t;
-
-STATIC void pyb_spibdev_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    // pyb_flash_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // if (self == &pyb_flash_obj) {
-    //     mp_printf(print, "Flash()");
-    // } else {
-    //     mp_printf(print, "Flash(start=%u, len=%u)", self->start, self->len);
-    // }
-    return;
-}
-
-STATIC mp_obj_t pyb_spibdev_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    // machine_hard_spi_obj_t *spi = MP_OBJ_TO_PTR(all_args[0]);
-    const spi_t *spi = spi_from_mp_obj(all_args[0]);
-    pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
-    sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
-	self->base.type = &pyb_spibdev_type;
-    common_hal_sdcardio_sdcard_construct(self, spi, pin, 500);
-    return MP_OBJ_FROM_PTR(self);
-}
-
-STATIC mp_obj_t pyb_spibdev_readblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
-	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint32_t block_num = mp_obj_get_int(start_block_in);
-    mp_buffer_info_t buf;
-    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
-
-    int result = common_hal_sdcardio_sdcard_readblocks(self, block_num, &buf);
-    if (result < 0) {
-        mp_raise_OSError(-result);
-    }
-    return mp_const_none;
-}
-//STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pyb_spibdev_readblocks_obj, 3, 4, pyb_spibdev_readblocks);
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_readblocks_obj, pyb_spibdev_readblocks);
-
-STATIC mp_obj_t pyb_spibdev_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
-	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    uint32_t block_num = mp_obj_get_int(start_block_in);
-    mp_buffer_info_t buf;
-    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
-
-    int result = common_hal_sdcardio_sdcard_writeblocks(self, block_num, &buf);
-    if (result < 0) {
-        mp_raise_OSError(-result);
-    }
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_writeblocks_obj, pyb_spibdev_writeblocks);
-
-STATIC mp_obj_t pyb_spibdev_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
-//    return mp_const_none;
-	return 0;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_spibdev_ioctl_obj, pyb_spibdev_ioctl);
-
-STATIC const mp_rom_map_elem_t pyb_spibdev_locals_dict_table[] = {
-     { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&pyb_spibdev_readblocks_obj) },
-     { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&pyb_spibdev_writeblocks_obj) },
-     { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&pyb_spibdev_ioctl_obj) },
-};
-
-STATIC MP_DEFINE_CONST_DICT(pyb_spibdev_locals_dict, pyb_spibdev_locals_dict_table);
-
-const mp_obj_type_t pyb_spibdev_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_Spibdev,
-    .print = pyb_spibdev_print,
-    .make_new = pyb_spibdev_make_new,
-    .locals_dict = (mp_obj_dict_t *)&pyb_spibdev_locals_dict,
-};

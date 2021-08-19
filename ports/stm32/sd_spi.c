@@ -31,10 +31,11 @@
 //#include "shared-bindings/time/__init__.h"
 //#include "shared-bindings/util.h"
 //#include "shared-module/sdcardio/SDCard.h"
-#include "SDCard.h"
+#include <sd_spi.h>
 #include "pin.h"
 #include "py/mperrno.h"
 #include <string.h>
+#include "storage.h"
 
 #if 0
 #define DEBUG_PRINT(...) ((void)mp_printf(&mp_plat_print, ##__VA_ARGS__))
@@ -74,29 +75,12 @@ bool spi_read(sdcardio_sdcard_obj_t *self, uint8_t *data, size_t len, uint8_t wr
     return true;
 }
 
-// STATIC bool lock_and_configure_bus(sdcardio_sdcard_obj_t *self) {
-//    if (!common_hal_busio_spi_try_lock(self->bus)) {
-//        return false;
-//    }
-//    common_hal_busio_spi_configure(self->bus, self->baudrate, 0, 0, 8);
-//    common_hal_digitalio_digitalinout_set_value(&self->cs, false);
-//    return true;
-// }
-
-// STATIC void lock_bus_or_throw(sdcardio_sdcard_obj_t *self) {
-//    if (!lock_and_configure_bus(self)) {
-//        mp_raise_OSError(EAGAIN);
-//    }
-// }
-
 STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes)
 {
     uint8_t buf[] = {0xff};
-    //    common_hal_digitalio_digitalinout_set_value(&self->cs, true);
     mp_hal_pin_high(self->cs);
     for (int i = 0; i < bytes; i++)
     {
-        //    common_hal_busio_spi_write(self->bus, buf, 1);
         spi_write(self, buf, 1);
     }
 }
@@ -104,7 +88,6 @@ STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes)
 STATIC void extraclock_and_unlock_bus(sdcardio_sdcard_obj_t *self) {
     clock_card(self, 1);
     mp_hal_pin_high(self->cs);
-//    common_hal_busio_spi_unlock(self->bus);
 }
 
 static uint8_t CRC7(const uint8_t *data, uint8_t n)
@@ -133,7 +116,6 @@ STATIC void wait_for_ready(sdcardio_sdcard_obj_t *self)
     while (mp_hal_ticks_us() < deadline)
     {
         uint8_t b;
-        //    common_hal_busio_spi_read(self->bus, &b, 1, 0xff);
         spi_read(self, &b, 1, 0xff);
         if (b == 0xff)
         {
@@ -157,14 +139,12 @@ STATIC int cmd(sdcardio_sdcard_obj_t *self, int cmd, int arg, void *response_buf
     {
         wait_for_ready(self);
     }
-    //    common_hal_busio_spi_write(self->bus, cmdbuf, sizeof(cmdbuf));
     spi_write(self, cmdbuf, sizeof(cmdbuf));
 
     // Wait for the response (response[7] == 0)
     bool response_received = false;
     for (int i = 0; i < CMD_TIMEOUT; i++)
     {
-        //    common_hal_busio_spi_read(self->bus, cmdbuf, 1, 0xff);
         spi_read(self, cmdbuf, 1, 0xff);
         if ((cmdbuf[0] & 0x80) == 0)
         {
@@ -187,18 +167,15 @@ STATIC int cmd(sdcardio_sdcard_obj_t *self, int cmd, int arg, void *response_buf
             do
             {
                 // Wait for the start block byte
-                //common_hal_busio_spi_read(self->bus, cmdbuf + 1, 1, 0xff);
                 spi_read(self, cmdbuf + 1, 1, 0xff);
             } while (cmdbuf[1] != 0xfe);
         }
 
-        //    common_hal_busio_spi_read(self->bus, response_buf, response_len, 0xff);
         spi_read(self, response_buf, response_len, 0xff);
 
         if (data_block)
         {
             // Read and discard the CRC-CCITT checksum
-            //    common_hal_busio_spi_read(self->bus, cmdbuf + 1, 2, 0xff);
             spi_read(self, cmdbuf + 1, 2, 0xff);
         }
     }
@@ -215,12 +192,10 @@ STATIC int block_cmd(sdcardio_sdcard_obj_t *self, int cmd_, int block, void *res
  {
      uint8_t cmdbuf[2] = {cmd, 0xff};
 
-     // common_hal_busio_spi_write(self->bus, cmdbuf, sizeof(cmdbuf));
      spi_write(self, cmdbuf, sizeof(cmdbuf));
      // Wait for the response (response[7] == response)
      for (int i = 0; i < CMD_TIMEOUT; i++)
      {
-         // common_hal_busio_spi_read(self->bus, cmdbuf, 1, 0xff);
          spi_read(self, cmdbuf, 1, 0xff);
          if (cmdbuf[0] == response)
          {
@@ -263,7 +238,6 @@ STATIC const int init_card(sdcardio_sdcard_obj_t *self)
 {
     clock_card(self, 16);
 
-     //   common_hal_digitalio_digitalinout_set_value(&self->cs, false);
     //  CMD0: init card: should return _R1_IDLE_STATE (allow 5 attempts)
     {
         bool reached_idle_state = false;
@@ -364,10 +338,8 @@ STATIC const int init_card(sdcardio_sdcard_obj_t *self)
     return 0;
 }
 
-void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate)
+void sd_spi_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate)
 {
-    //   common_hal_digitalio_digitalinout_construct(&self->cs, cs);
-    //   common_hal_digitalio_digitalinout_switch_to_output(&self->cs, true, DRIVE_MODE_PUSH_PULL);
     self->bus = bus;
     self->cs = cs;
     self->cdv = 512;
@@ -395,7 +367,6 @@ void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi
 
     if (result != 0)
     {
-        //    common_hal_digitalio_digitalinout_deinit(&self->cs);
         self->cs = NULL;
         mp_raise_msg(&mp_type_OSError, NULL);
     }
@@ -411,7 +382,7 @@ void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi
 //    common_hal_digitalio_digitalinout_deinit(&self->cs);
 //}
 
-void common_hal_sdcardio_check_for_deinit(sdcardio_sdcard_obj_t *self)
+void sd_spi_check_for_deinit(sdcardio_sdcard_obj_t *self)
 {
     if (!self->bus)
     {
@@ -420,9 +391,9 @@ void common_hal_sdcardio_check_for_deinit(sdcardio_sdcard_obj_t *self)
     }
 }
 
-int common_hal_sdcardio_sdcard_get_blockcount(sdcardio_sdcard_obj_t *self)
+int sd_spi_get_blockcount(sdcardio_sdcard_obj_t *self)
 {
-    common_hal_sdcardio_check_for_deinit(self);
+    sd_spi_check_for_deinit(self);
     return self->sectors;
 }
 
@@ -431,15 +402,12 @@ int readinto(sdcardio_sdcard_obj_t *self, void *buf, size_t size)
     uint8_t aux[2] = {0, 0};
     while (aux[0] != 0xfe)
     {
-        //    common_hal_busio_spi_read(self->bus, aux, 1, 0xff);
         spi_read(self, aux, 1, 0xff);
     }
 
-    // common_hal_busio_spi_read(self->bus, buf, size, 0xff);
     spi_read(self, buf, size, 0xff);
 
     // Read checksum and throw it away
-    // common_hal_busio_spi_read(self->bus, aux, sizeof(aux), 0xff);
     spi_read(self, aux, sizeof(aux), 0xff);
     return 0;
 }
@@ -479,7 +447,6 @@ int readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info
         while (r != 0)
         {
             uint8_t single_byte;
-            //    common_hal_busio_spi_read(self->bus, &single_byte, 1, 0xff);
             spi_read(self, &single_byte, 1, 0xff);
             if (single_byte & 0x80)
             {
@@ -491,8 +458,8 @@ int readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info
     return 0;
 }
 
-int common_hal_sdcardio_sdcard_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-    common_hal_sdcardio_check_for_deinit(self);
+int sd_spi_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
+    sd_spi_check_for_deinit(self);
     if (buf->len % 512 != 0) {
     	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
     	mp_raise_msg(&mp_type_OSError, NULL);
@@ -551,7 +518,7 @@ STATIC int _write(sdcardio_sdcard_obj_t *self, uint8_t token, void *buf, size_t 
 }
 
 STATIC int writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-    common_hal_sdcardio_check_for_deinit(self);
+    sd_spi_check_for_deinit(self);
     uint32_t nblocks = buf->len / 512;
     if (nblocks == 1) {
         //  Use CMD24 to write a single block
@@ -584,8 +551,8 @@ STATIC int writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buf
     return 0;
 }
 
-int common_hal_sdcardio_sdcard_writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-    common_hal_sdcardio_check_for_deinit(self);
+int sd_spi_writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
+    sd_spi_check_for_deinit(self);
     if (buf->len % 512 != 0) {
     	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
         mp_raise_ValueError(NULL);
@@ -595,3 +562,77 @@ int common_hal_sdcardio_sdcard_writeblocks(sdcardio_sdcard_obj_t *self, uint32_t
     mp_hal_pin_high(self->cs);
     return r;
 }
+
+/*
+*Micropython bindings
+*/
+
+STATIC void pyb_sd_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    // pyb_flash_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // if (self == &pyb_flash_obj) {
+    //     mp_printf(print, "Flash()");
+    // } else {
+    //     mp_printf(print, "Flash(start=%u, len=%u)", self->start, self->len);
+    // }
+    return;
+}
+
+STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+    const spi_t *spi = spi_from_mp_obj(all_args[0]);
+    pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
+    sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
+	self->base.type = &pyb_sd_spi_type;
+    sd_spi_construct(self, spi, pin, 500);
+    return MP_OBJ_FROM_PTR(self);
+}
+
+STATIC mp_obj_t pyb_sd_spi_readblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
+	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    uint32_t block_num = mp_obj_get_int(start_block_in);
+    mp_buffer_info_t buf;
+    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
+
+    int result = sd_spi_readblocks(self, block_num, &buf);
+    if (result < 0) {
+        mp_raise_OSError(-result);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_readblocks_obj, pyb_sd_spi_readblocks);
+
+STATIC mp_obj_t pyb_sd_spi_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
+	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    uint32_t block_num = mp_obj_get_int(start_block_in);
+    mp_buffer_info_t buf;
+    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
+
+    int result = sd_spi_writeblocks(self, block_num, &buf);
+    if (result < 0) {
+        mp_raise_OSError(-result);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_writeblocks_obj, pyb_sd_spi_writeblocks);
+
+STATIC mp_obj_t pyb_sd_spi_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
+//    return mp_const_none;
+	return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_ioctl_obj, pyb_sd_spi_ioctl);
+
+STATIC const mp_rom_map_elem_t pyb_sd_spi_locals_dict_table[] = {
+     { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&pyb_sd_spi_readblocks_obj) },
+     { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&pyb_sd_spi_writeblocks_obj) },
+     { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&pyb_sd_spi_ioctl_obj) },
+};
+
+STATIC MP_DEFINE_CONST_DICT(pyb_sd_spi_locals_dict, pyb_sd_spi_locals_dict_table);
+
+const mp_obj_type_t pyb_sd_spi_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_sd_spi,
+    .print = pyb_sd_spi_print,
+    .make_new = pyb_sd_spi_make_new,
+    .locals_dict = (mp_obj_dict_t *)&pyb_sd_spi_locals_dict,
+};

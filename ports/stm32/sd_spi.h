@@ -27,13 +27,9 @@
 #pragma once
 
 #include "py/obj.h"
-//#include "py/objproperty.h"
 #include "py/runtime.h"
 #include "py/objarray.h"
 #include "errno.h"
-
-//#include "common-hal/busio/SPI.h"
-//#include "common-hal/digitalio/DigitalInOut.h"
 
 #include "pin.h"
 #include "spi.h"

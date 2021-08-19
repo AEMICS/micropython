@@ -74,7 +74,7 @@ int spi_bdev_writeblocks_raw(spi_bdev_t *bdev, const uint8_t *src, uint32_t bloc
 extern const struct _mp_obj_type_t pyb_flash_type;
 extern const struct _pyb_flash_obj_t pyb_flash_obj;
 
-extern const struct _mp_obj_type_t pyb_spibdev_type;
+extern const struct _mp_obj_type_t pyb_sd_spi_type;
 
 struct _fs_user_mount_t;
 void pyb_flash_init_vfs(struct _fs_user_mount_t *vfs);

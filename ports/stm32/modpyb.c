@@ -259,7 +259,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     #endif
 
     #if MICROPY_HW_ENABLE_STORAGE
-    { MP_ROM_QSTR(MP_QSTR_Spibdev), MP_ROM_PTR(&pyb_spibdev_type) }
+    { MP_ROM_QSTR(MP_QSTR_sd_spi), MP_ROM_PTR(&pyb_sd_spi_type) }
     #endif
 };
 

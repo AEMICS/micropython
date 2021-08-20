@@ -43,6 +43,10 @@ user.props
 ######################
 genrst/
 
+# MacOS desktop metadata files
+######################
+.DS_Store
+
 # Eclipse project files
 ######################
 .cproject

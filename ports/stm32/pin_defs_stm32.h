@@ -47,7 +47,7 @@ enum {
     AF_FN_I2C,
     AF_FN_USART,
     AF_FN_UART = AF_FN_USART,
-    AF_FN_LPUART = AF_FN_USART,
+    AF_FN_LPUART,
     AF_FN_SPI,
     AF_FN_I2S,
     AF_FN_SDMMC,

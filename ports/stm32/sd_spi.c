@@ -61,21 +61,21 @@
 #define TIMEOUT_WAITING_FOR_V2_CARD -7
 #define BUFFER_LENGTH_MUST_BE_A_MULTIPLE_OF_512 -8
 
-bool spi_write(sdcardio_sdcard_obj_t *self, const uint8_t *data, size_t len)
+bool spi_write(sd_spi_obj_t *self, const uint8_t *data, size_t len)
 {
     spi_transfer(self->bus, len, data, NULL, SPI_TRANSFER_TIMEOUT(len));
 
     return true;
 }
 
-bool spi_read(sdcardio_sdcard_obj_t *self, uint8_t *data, size_t len, uint8_t write_value)
+bool spi_read(sd_spi_obj_t *self, uint8_t *data, size_t len, uint8_t write_value)
 {
 	memset(data, write_value, len);
     spi_transfer(self->bus, len, data, data, SPI_TRANSFER_TIMEOUT(len));
     return true;
 }
 
-STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes)
+STATIC void clock_card(sd_spi_obj_t *self, int bytes)
 {
     uint8_t buf[] = {0xff};
     mp_hal_pin_high(self->cs);
@@ -85,7 +85,7 @@ STATIC void clock_card(sdcardio_sdcard_obj_t *self, int bytes)
     }
 }
 
-STATIC void extraclock_and_unlock_bus(sdcardio_sdcard_obj_t *self) {
+STATIC void extraclock_and_unlock_bus(sd_spi_obj_t *self) {
     clock_card(self, 1);
     mp_hal_pin_high(self->cs);
 }
@@ -110,7 +110,7 @@ static uint8_t CRC7(const uint8_t *data, uint8_t n)
 }
 
 #define READY_TIMEOUT_US (300 * 1000) // 300ms
-STATIC void wait_for_ready(sdcardio_sdcard_obj_t *self)
+STATIC void wait_for_ready(sd_spi_obj_t *self)
 {
 	mp_uint_t deadline = mp_hal_ticks_us() + READY_TIMEOUT_US;
     while (mp_hal_ticks_us() < deadline)
@@ -124,7 +124,7 @@ STATIC void wait_for_ready(sdcardio_sdcard_obj_t *self)
     }
 }
 //// In Python API, defaults are response=None, data_block=True, wait=True
-STATIC int cmd(sdcardio_sdcard_obj_t *self, int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait)
+STATIC int cmd(sd_spi_obj_t *self, int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait)
 {
     DEBUG_PRINT("cmd % 3d [%02x] arg=% 11d [%08x] len=%d%s%s\n", cmd, cmd, arg, arg, response_len, data_block ? " data" : "", wait ? " wait" : "");
     uint8_t cmdbuf[6];
@@ -183,12 +183,12 @@ STATIC int cmd(sdcardio_sdcard_obj_t *self, int cmd, int arg, void *response_buf
     return cmdbuf[0];
 }
 
-STATIC int block_cmd(sdcardio_sdcard_obj_t *self, int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait)
+STATIC int block_cmd(sd_spi_obj_t *self, int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait)
 {
     return cmd(self, cmd_, block * self->cdv, response_buf, response_len, true, true);
 }
 
- STATIC bool cmd_nodata(sdcardio_sdcard_obj_t *self, int cmd, int response)
+ STATIC bool cmd_nodata(sd_spi_obj_t *self, int cmd, int response)
  {
      uint8_t cmdbuf[2] = {cmd, 0xff};
 
@@ -205,7 +205,7 @@ STATIC int block_cmd(sdcardio_sdcard_obj_t *self, int cmd_, int block, void *res
      return -EIO;
  }
 
- STATIC const int init_card_v1(sdcardio_sdcard_obj_t *self)
+ STATIC const int init_card_v1(sd_spi_obj_t *self)
  {
      for (int i = 0; i < CMD_TIMEOUT; i++)
      {
@@ -217,7 +217,7 @@ STATIC int block_cmd(sdcardio_sdcard_obj_t *self, int cmd_, int block, void *res
      return TIMEOUT_WAITING_FOR_V1_CARD;
  }
 
- STATIC const int init_card_v2(sdcardio_sdcard_obj_t *self) {
+ STATIC const int init_card_v2(sd_spi_obj_t *self) {
     for (int i = 0; i < CMD_TIMEOUT; i++) {
         uint8_t ocr[4];
         mp_hal_delay_ms(50);
@@ -234,7 +234,7 @@ STATIC int block_cmd(sdcardio_sdcard_obj_t *self, int cmd_, int block, void *res
     return TIMEOUT_WAITING_FOR_V2_CARD;
  }
 
-STATIC const int init_card(sdcardio_sdcard_obj_t *self)
+STATIC const int init_card(sd_spi_obj_t *self)
 {
     clock_card(self, 16);
 
@@ -338,7 +338,7 @@ STATIC const int init_card(sdcardio_sdcard_obj_t *self)
     return 0;
 }
 
-void sd_spi_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate)
+void sd_spi_construct(sd_spi_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate)
 {
     self->bus = bus;
     self->cs = cs;
@@ -374,7 +374,7 @@ void sd_spi_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *
     self->baudrate = baudrate;
 }
 //
-//void common_hal_sdcardio_sdcard_deinit(sdcardio_sdcard_obj_t *self) {
+//void common_hal_sdcardio_sdcard_deinit(sd_spi_obj_t *self) {
 //    if (!self->bus) {
 //        return;
 //    }
@@ -382,7 +382,7 @@ void sd_spi_construct(sdcardio_sdcard_obj_t *self, const spi_t *bus, pin_obj_t *
 //    common_hal_digitalio_digitalinout_deinit(&self->cs);
 //}
 
-void sd_spi_check_for_deinit(sdcardio_sdcard_obj_t *self)
+void sd_spi_check_for_deinit(sd_spi_obj_t *self)
 {
     if (!self->bus)
     {
@@ -391,13 +391,13 @@ void sd_spi_check_for_deinit(sdcardio_sdcard_obj_t *self)
     }
 }
 
-int sd_spi_get_blockcount(sdcardio_sdcard_obj_t *self)
+int sd_spi_get_blockcount(sd_spi_obj_t *self)
 {
     sd_spi_check_for_deinit(self);
     return self->sectors;
 }
 
-int readinto(sdcardio_sdcard_obj_t *self, void *buf, size_t size)
+int readinto(sd_spi_obj_t *self, void *buf, size_t size)
 {
     uint8_t aux[2] = {0, 0};
     while (aux[0] != 0xfe)
@@ -412,7 +412,7 @@ int readinto(sdcardio_sdcard_obj_t *self, void *buf, size_t size)
     return 0;
 }
 
-int readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf)
+int readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf)
 {
     uint32_t nblocks = buf->len / 512;
     if (nblocks == 1)
@@ -458,7 +458,7 @@ int readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info
     return 0;
 }
 
-int sd_spi_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
+int sd_spi_readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
     sd_spi_check_for_deinit(self);
     if (buf->len % 512 != 0) {
     	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
@@ -472,7 +472,7 @@ int sd_spi_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buff
     return r;
 }
 
-STATIC int _write(sdcardio_sdcard_obj_t *self, uint8_t token, void *buf, size_t size) {
+STATIC int _write(sd_spi_obj_t *self, uint8_t token, void *buf, size_t size) {
     wait_for_ready(self);
 
     uint8_t cmd[2];
@@ -517,7 +517,7 @@ STATIC int _write(sdcardio_sdcard_obj_t *self, uint8_t token, void *buf, size_t 
     return 0;
 }
 
-STATIC int writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
+STATIC int writeblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
     sd_spi_check_for_deinit(self);
     uint32_t nblocks = buf->len / 512;
     if (nblocks == 1) {
@@ -551,7 +551,7 @@ STATIC int writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buf
     return 0;
 }
 
-int sd_spi_writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
+int sd_spi_writeblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
     sd_spi_check_for_deinit(self);
     if (buf->len % 512 != 0) {
     	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
@@ -580,14 +580,14 @@ STATIC void pyb_sd_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print
 STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     const spi_t *spi = spi_from_mp_obj(all_args[0]);
     pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
-    sdcardio_sdcard_obj_t *self = m_new_obj(sdcardio_sdcard_obj_t);
+    sd_spi_obj_t *self = m_new_obj(sd_spi_obj_t);
 	self->base.type = &pyb_sd_spi_type;
     sd_spi_construct(self, spi, pin, 500);
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t pyb_sd_spi_readblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
-	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
+	sd_spi_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t block_num = mp_obj_get_int(start_block_in);
     mp_buffer_info_t buf;
     mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
@@ -601,7 +601,7 @@ STATIC mp_obj_t pyb_sd_spi_readblocks(mp_obj_t self_in, mp_obj_t start_block_in,
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_readblocks_obj, pyb_sd_spi_readblocks);
 
 STATIC mp_obj_t pyb_sd_spi_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
-	sdcardio_sdcard_obj_t *self = MP_OBJ_TO_PTR(self_in);
+	sd_spi_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     uint32_t block_num = mp_obj_get_int(start_block_in);
     mp_buffer_info_t buf;

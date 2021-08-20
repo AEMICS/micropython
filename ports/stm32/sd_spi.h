@@ -41,11 +41,11 @@ typedef struct {
     int cdv;
     int baudrate;
     uint32_t sectors;
-} sdcardio_sdcard_obj_t;
+} sd_spi_obj_t;
 
-void common_hal_sdcardio_sdcard_construct(sdcardio_sdcard_obj_t *self, const spi_t *spi, pin_obj_t *cs, int baudrate);
-void common_hal_sdcardio_sdcard_deinit(sdcardio_sdcard_obj_t *self);
-void common_hal_sdcardio_sdcard_check_for_deinit(sdcardio_sdcard_obj_t *self);
-int common_hal_sdcardio_sdcard_get_blockcount(sdcardio_sdcard_obj_t *self);
-int common_hal_sdcardio_sdcard_readblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf);
-int common_hal_sdcardio_sdcard_writeblocks(sdcardio_sdcard_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf);
+void sd_spi_construct(sd_spi_obj_t *self, const spi_t *spi, pin_obj_t *cs, int baudrate);
+void sd_spi_deinit(sd_spi_obj_t *self);
+void sd_spi_check_for_deinit(sd_spi_obj_t *self);
+int sd_spi_get_blockcount(sd_spi_obj_t *self);
+int sd_spi_readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf);
+int sd_spi_writeblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf);

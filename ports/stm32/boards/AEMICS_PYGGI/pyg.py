@@ -185,6 +185,4 @@ class BQ24160():
 
     def write_safe_tim_ntc_mon(self, data):
         self._mask_check(data, self.SAFE_TIM_NTC_MON_w_mask)
-        self._write_one(self.SAFE_TIM_NTC_MON,
-                        data & self.SAFE_TIM_NTC_MON_w_mask)
-
+        self._write_one(self.SAFE_TIM_NTC_MON, data & self.SAFE_TIM_NTC_MON_w_mask)

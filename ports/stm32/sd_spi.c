@@ -37,6 +37,8 @@
 #include <string.h>
 #include "storage.h"
 
+
+#if MICROPY_HW_ENABLE_SD_SPI
 #if 0
 #define DEBUG_PRINT(...) ((void)mp_printf(&mp_plat_print, ##__VA_ARGS__))
 #else
@@ -61,33 +63,37 @@
 #define TIMEOUT_WAITING_FOR_V2_CARD -7
 #define BUFFER_LENGTH_MUST_BE_A_MULTIPLE_OF_512 -8
 
-bool spi_write(sd_spi_obj_t *self, const uint8_t *data, size_t len)
+const spi_t *spi = &spi_obj[MICROPY_HW_ENABLE_SD_SPI-1]; // spi_from_mp_obj(all_args[0]);
+int cdv;
+uint32_t sectors;
+
+bool spi_write(const uint8_t *data, size_t len)
 {
-    spi_transfer(self->bus, len, data, NULL, SPI_TRANSFER_TIMEOUT(len));
+    spi_transfer(spi, len, data, NULL, SPI_TRANSFER_TIMEOUT(len));
 
     return true;
 }
 
-bool spi_read(sd_spi_obj_t *self, uint8_t *data, size_t len, uint8_t write_value)
+bool spi_read(uint8_t *data, size_t len, uint8_t write_value)
 {
 	memset(data, write_value, len);
-    spi_transfer(self->bus, len, data, data, SPI_TRANSFER_TIMEOUT(len));
+    spi_transfer(spi, len, data, data, SPI_TRANSFER_TIMEOUT(len));
     return true;
 }
 
-STATIC void clock_card(sd_spi_obj_t *self, int bytes)
+STATIC void clock_card(int bytes)
 {
     uint8_t buf[] = {0xff};
-    mp_hal_pin_high(self->cs);
+    mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
     for (int i = 0; i < bytes; i++)
     {
-        spi_write(self, buf, 1);
+        spi_write(buf, 1);
     }
 }
 
-STATIC void extraclock_and_unlock_bus(sd_spi_obj_t *self) {
-    clock_card(self, 1);
-    mp_hal_pin_high(self->cs);
+STATIC void extraclock_and_unlock_bus() {
+    clock_card(1);
+    mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
 }
 
 static uint8_t CRC7(const uint8_t *data, uint8_t n)
@@ -110,13 +116,13 @@ static uint8_t CRC7(const uint8_t *data, uint8_t n)
 }
 
 #define READY_TIMEOUT_US (300 * 1000) // 300ms
-STATIC void wait_for_ready(sd_spi_obj_t *self)
+STATIC void wait_for_ready()
 {
 	mp_uint_t deadline = mp_hal_ticks_us() + READY_TIMEOUT_US;
     while (mp_hal_ticks_us() < deadline)
     {
         uint8_t b;
-        spi_read(self, &b, 1, 0xff);
+        spi_read(&b, 1, 0xff);
         if (b == 0xff)
         {
             break;
@@ -124,7 +130,7 @@ STATIC void wait_for_ready(sd_spi_obj_t *self)
     }
 }
 //// In Python API, defaults are response=None, data_block=True, wait=True
-STATIC int cmd(sd_spi_obj_t *self, int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait)
+STATIC int cmd(int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait)
 {
     DEBUG_PRINT("cmd % 3d [%02x] arg=% 11d [%08x] len=%d%s%s\n", cmd, cmd, arg, arg, response_len, data_block ? " data" : "", wait ? " wait" : "");
     uint8_t cmdbuf[6];
@@ -137,15 +143,15 @@ STATIC int cmd(sd_spi_obj_t *self, int cmd, int arg, void *response_buf, size_t 
 
     if (wait)
     {
-        wait_for_ready(self);
+        wait_for_ready();
     }
-    spi_write(self, cmdbuf, sizeof(cmdbuf));
+    spi_write(cmdbuf, sizeof(cmdbuf));
 
     // Wait for the response (response[7] == 0)
     bool response_received = false;
     for (int i = 0; i < CMD_TIMEOUT; i++)
     {
-        spi_read(self, cmdbuf, 1, 0xff);
+        spi_read(cmdbuf, 1, 0xff);
         if ((cmdbuf[0] & 0x80) == 0)
         {
             response_received = true;
@@ -167,89 +173,83 @@ STATIC int cmd(sd_spi_obj_t *self, int cmd, int arg, void *response_buf, size_t 
             do
             {
                 // Wait for the start block byte
-                spi_read(self, cmdbuf + 1, 1, 0xff);
+                spi_read(cmdbuf + 1, 1, 0xff);
             } while (cmdbuf[1] != 0xfe);
         }
 
-        spi_read(self, response_buf, response_len, 0xff);
+        spi_read(response_buf, response_len, 0xff);
 
         if (data_block)
         {
             // Read and discard the CRC-CCITT checksum
-            spi_read(self, cmdbuf + 1, 2, 0xff);
+            spi_read(cmdbuf + 1, 2, 0xff);
         }
     }
 
     return cmdbuf[0];
 }
 
-STATIC int block_cmd(sd_spi_obj_t *self, int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait)
+STATIC int block_cmd(int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait)
 {
-    return cmd(self, cmd_, block * self->cdv, response_buf, response_len, true, true);
+    return cmd(cmd_, (block * cdv), response_buf, response_len, true, true);
 }
 
- STATIC bool cmd_nodata(sd_spi_obj_t *self, int cmd, int response)
- {
-     uint8_t cmdbuf[2] = {cmd, 0xff};
+STATIC bool cmd_nodata(int cmd, int response) {
+	uint8_t cmdbuf[2] = { cmd, 0xff };
 
-     spi_write(self, cmdbuf, sizeof(cmdbuf));
-     // Wait for the response (response[7] == response)
-     for (int i = 0; i < CMD_TIMEOUT; i++)
-     {
-         spi_read(self, cmdbuf, 1, 0xff);
-         if (cmdbuf[0] == response)
-         {
-             return 0;
-         }
-     }
-     return -EIO;
- }
+	spi_write(cmdbuf, sizeof(cmdbuf));
+	// Wait for the response (response[7] == response)
+	for (int i = 0; i < CMD_TIMEOUT; i++) {
+		spi_read(cmdbuf, 1, 0xff);
+		if (cmdbuf[0] == response) {
+			return 0;
+		}
+	}
+	return -EIO;
+}
 
- STATIC const int init_card_v1(sd_spi_obj_t *self)
- {
-     for (int i = 0; i < CMD_TIMEOUT; i++)
-     {
-         if (cmd(self, 41, 0, NULL, 0, true, true) == 0)
-         {
-             return 0;
-         }
-     }
-     return TIMEOUT_WAITING_FOR_V1_CARD;
- }
+STATIC const int init_card_v1() {
+	for (int i = 0; i < CMD_TIMEOUT; i++) {
+		if (cmd(41, 0, NULL, 0, true, true) == 0) {
+			return 0;
+		}
+	}
+	return TIMEOUT_WAITING_FOR_V1_CARD;
+}
 
- STATIC const int init_card_v2(sd_spi_obj_t *self) {
-    for (int i = 0; i < CMD_TIMEOUT; i++) {
-        uint8_t ocr[4];
-        mp_hal_delay_ms(50);
-        cmd(self, 58, 0, ocr, sizeof(ocr), false, true);
-        cmd(self, 55, 0, NULL, 0, true, true);
-        if (cmd(self, 41, 0x40000000, NULL, 0, true, true) == 0) {
-            cmd(self, 58, 0, ocr, sizeof(ocr), false, true);
-            if ((ocr[0] & 0x40) != 0) {
-                self->cdv = 1;
-            }
-            return 0;
-        }
-    }
-    return TIMEOUT_WAITING_FOR_V2_CARD;
- }
+STATIC const int init_card_v2() {
+	for (int i = 0; i < CMD_TIMEOUT; i++) {
+		uint8_t ocr[4];
+		mp_hal_delay_ms(50);
+		cmd(58, 0, ocr, sizeof(ocr), false, true);
+		cmd(55, 0, NULL, 0, true, true);
+		if (cmd(41, 0x40000000, NULL, 0, true, true) == 0) {
+			cmd(58, 0, ocr, sizeof(ocr), false, true);
+			if ((ocr[0] & 0x40) != 0) {
+				cdv = 1;
+			}
+			return 0;
+		}
+	}
+	return TIMEOUT_WAITING_FOR_V2_CARD;
+}
 
-STATIC const int init_card(sd_spi_obj_t *self)
+STATIC const int init_card()
 {
-    clock_card(self, 16);
+    clock_card(16);
 
     //  CMD0: init card: should return _R1_IDLE_STATE (allow 5 attempts)
     {
         bool reached_idle_state = false;
         for (int i = 0; i < 5; i++)
         {
-            mp_hal_pin_low(self->cs);
-            if (cmd(self, 0, 0, NULL, 0, true, true) == R1_IDLE_STATE)
+            mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+            if (cmd(0, 0, NULL, 0, true, true) == R1_IDLE_STATE)
             {
                 reached_idle_state = true;
                 break;
             }
-            clock_card(self, 1);
+            clock_card(1);
         }
         if (!reached_idle_state)
         {
@@ -262,13 +262,13 @@ STATIC const int init_card(sd_spi_obj_t *self)
     // CMD8: determine card version
     {
         uint8_t rb7[4];
-        mp_hal_pin_low(self->cs);
-        int response = cmd(self, 8, 0x1AA, rb7, sizeof(rb7), false, true);
-        clock_card(self, 1);
-        mp_hal_pin_low(self->cs);
+        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+        int response = cmd(8, 0x1AA, rb7, sizeof(rb7), false, true);
+        clock_card(1);
+        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response == R1_IDLE_STATE)
         {
-            const int result = init_card_v2(self);
+            const int result = init_card_v2();
             if (result != 0)
             {
                 return result;
@@ -276,7 +276,7 @@ STATIC const int init_card(sd_spi_obj_t *self)
         }
         else if (response == (R1_IDLE_STATE | R1_ILLEGAL_COMMAND))
         {
-            const int result = init_card_v1(self);
+            const int result = init_card_v1();
             if (result != 0)
             {
                 return result;
@@ -293,9 +293,9 @@ STATIC const int init_card(sd_spi_obj_t *self)
     // CMD9: get number of sectors
     {
         uint8_t csd[16];
-        int response = cmd(self, 9, 0, csd, sizeof(csd), true, true);
-        clock_card(self, 1);
-        mp_hal_pin_low(self->cs);
+        int response = cmd(9, 0, csd, sizeof(csd), true, true);
+        clock_card(1);
+        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response != 0)
         {
             //    return translate("no response from SD card");
@@ -312,22 +312,22 @@ STATIC const int init_card(sd_spi_obj_t *self)
 
         if (csd_version == 1)
         {
-            self->sectors = ((csd[8] << 8 | csd[9]) + 1) * 1024;
+            sectors = ((csd[8] << 8 | csd[9]) + 1) * 1024;
         }
         else
         {
             uint32_t block_length = 1 << (csd[5] & 0xF);
             uint32_t c_size = ((csd[6] & 0x3) << 10) | (csd[7] << 2) | ((csd[8] & 0xC) >> 6);
             uint32_t mult = 1 << (((csd[9] & 0x3) << 1 | (csd[10] & 0x80) >> 7) + 2);
-            self->sectors = block_length / 512 * mult * (c_size + 1);
+            sectors = block_length / 512 * mult * (c_size + 1);
         }
     }
 
 //     CMD16: set block length to 512 bytes
     {
-        int response = cmd(self, 16, 512, NULL, 0, true, true);
-        clock_card(self, 1);
-        mp_hal_pin_low(self->cs);
+        int response = cmd(16, 512, NULL, 0, true, true);
+        clock_card(1);
+        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response != 0)
         {
             // return translate("can't set 512 block size");
@@ -338,15 +338,13 @@ STATIC const int init_card(sd_spi_obj_t *self)
     return 0;
 }
 
-void sd_spi_construct(sd_spi_obj_t *self, const spi_t *bus, pin_obj_t *cs, int baudrate)
+void sd_spi_construct() // int baudrate
 {
-    self->bus = bus;
-    self->cs = cs;
-    self->cdv = 512;
-    self->sectors = 0;
+    cdv = 512;
+    sectors = 0;
 //    self->baudrate = 250000;
     /*!< SPI configuration */
-    SPI_InitTypeDef *init = &self->bus->spi->Init;
+    SPI_InitTypeDef *init = &spi->spi->Init;
     init->Mode = SPI_MODE_MASTER;
     init->Direction = SPI_DIRECTION_2LINES;
     init->DataSize = SPI_DATASIZE_8BIT;
@@ -358,20 +356,17 @@ void sd_spi_construct(sd_spi_obj_t *self, const spi_t *bus, pin_obj_t *cs, int b
     init->TIMode = SPI_TIMODE_DISABLED;
     init->CRCCalculation = SPI_CRCCALCULATION_DISABLED;
     init->CRCPolynomial = 7; // unused
-    spi_init(self->bus, false);
+    spi_init(spi, false);
 
     //    lock_bus_or_throw(self);
-    mp_hal_pin_low(self->cs);
-    const int result = init_card(self);
-    extraclock_and_unlock_bus(self);
+    mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+    const int result = init_card();
+    extraclock_and_unlock_bus();
 
     if (result != 0)
     {
-        self->cs = NULL;
         mp_raise_msg(&mp_type_OSError, NULL);
     }
-
-    self->baudrate = baudrate;
 }
 //
 //void common_hal_sdcardio_sdcard_deinit(sd_spi_obj_t *self) {
@@ -382,48 +377,48 @@ void sd_spi_construct(sd_spi_obj_t *self, const spi_t *bus, pin_obj_t *cs, int b
 //    common_hal_digitalio_digitalinout_deinit(&self->cs);
 //}
 
-void sd_spi_check_for_deinit(sd_spi_obj_t *self)
+void sd_spi_check_for_deinit()
 {
-    if (!self->bus)
+    if (!spi)
     {
         mp_raise_msg(&mp_type_OSError, NULL);
         //    raise_deinited_error();
     }
 }
 
-int sd_spi_get_blockcount(sd_spi_obj_t *self)
+int sd_spi_get_blockcount()
 {
-    sd_spi_check_for_deinit(self);
-    return self->sectors;
+    sd_spi_check_for_deinit();
+    return sectors;
 }
 
-int readinto(sd_spi_obj_t *self, void *buf, size_t size)
+int readinto(void *buf, size_t size)
 {
     uint8_t aux[2] = {0, 0};
     while (aux[0] != 0xfe)
     {
-        spi_read(self, aux, 1, 0xff);
+        spi_read(aux, 1, 0xff);
     }
 
-    spi_read(self, buf, size, 0xff);
+    spi_read(buf, size, 0xff);
 
     // Read checksum and throw it away
-    spi_read(self, aux, sizeof(aux), 0xff);
+    spi_read(aux, sizeof(aux), 0xff);
     return 0;
 }
 
-int readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf)
+int readblocks(uint32_t start_block, mp_buffer_info_t *buf)
 {
     uint32_t nblocks = buf->len / 512;
     if (nblocks == 1)
     {
         //  Use CMD17 to read a single block
-        return block_cmd(self, 17, start_block, buf->buf, buf->len, true, true);
+        return block_cmd(17, start_block, buf->buf, buf->len, true, true);
     }
     else
     {
         //  Use CMD18 to read multiple blocks
-        int r = block_cmd(self, 18, start_block, NULL, 0, true, true);
+        int r = block_cmd(18, start_block, NULL, 0, true, true);
         if (r < 0)
         {
             return r;
@@ -432,7 +427,7 @@ int readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf)
         uint8_t *ptr = buf->buf;
         while (nblocks--)
         {
-            r = readinto(self, ptr, 512);
+            r = readinto(ptr, 512);
             if (r < 0)
             {
                 return r;
@@ -441,13 +436,13 @@ int readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf)
         }
 
         // End the multi-block read
-        r = cmd(self, 12, 0, NULL, 0, true, false);
+        r = cmd(12, 0, NULL, 0, true, false);
 
         // Return first status 0 or last before card ready (0xff)
         while (r != 0)
         {
             uint8_t single_byte;
-            spi_read(self, &single_byte, 1, 0xff);
+            spi_read(&single_byte, 1, 0xff);
             if (single_byte & 0x80)
             {
                 return r;
@@ -458,31 +453,31 @@ int readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf)
     return 0;
 }
 
-int sd_spi_readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-    sd_spi_check_for_deinit(self);
+int sd_spi_readblocks(uint32_t start_block, mp_buffer_info_t *buf) {
+    sd_spi_check_for_deinit();
     if (buf->len % 512 != 0) {
     	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
     	mp_raise_msg(&mp_type_OSError, NULL);
     }
 
 //    lock_and_configure_bus(self);
-    mp_hal_pin_low(self->cs);
-    int r = readblocks(self, start_block, buf);
-    extraclock_and_unlock_bus(self);
+    mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+    int r = readblocks(start_block, buf);
+    extraclock_and_unlock_bus();
     return r;
 }
 
-STATIC int _write(sd_spi_obj_t *self, uint8_t token, void *buf, size_t size) {
-    wait_for_ready(self);
+STATIC int _write(uint8_t token, void *buf, size_t size) {
+    wait_for_ready();
 
     uint8_t cmd[2];
     cmd[0] = token;
 
-    spi_write(self, cmd, 1);
-    spi_write(self, buf, size);
+    spi_write(cmd, 1);
+    spi_write(buf, size);
 
     cmd[0] = cmd[1] = 0xff;
-    spi_write(self, cmd, 2);
+    spi_write(cmd, 2);
 
     // Check the response
     // This differs from the traditional adafruit_sdcard handling,
@@ -497,7 +492,7 @@ STATIC int _write(sd_spi_obj_t *self, uint8_t token, void *buf, size_t size) {
     // combinations indicating failure.
     // In practice, I was seeing cmd[0] as 0xe5, indicating success
     for (int i = 0; i < CMD_TIMEOUT; i++) {
-        spi_read(self, cmd, 1, 0xff);
+        spi_read(cmd, 1, 0xff);
         DEBUG_PRINT("i=%02d cmd[0] = 0x%02x\n", i, cmd[0]);
         if ((cmd[0] & 0b00010001) == 0b00000001) {
             if ((cmd[0] & 0x1f) != 0x5) {
@@ -510,56 +505,56 @@ STATIC int _write(sd_spi_obj_t *self, uint8_t token, void *buf, size_t size) {
 
     // Wait for the write to finish
     do {
-        spi_read(self, cmd, 1, 0xff);
+        spi_read(cmd, 1, 0xff);
     } while (cmd[0] == 0);
 
     // Success
     return 0;
 }
 
-STATIC int writeblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-    sd_spi_check_for_deinit(self);
+STATIC int writeblocks(uint32_t start_block, mp_buffer_info_t *buf) {
+    sd_spi_check_for_deinit();
     uint32_t nblocks = buf->len / 512;
     if (nblocks == 1) {
         //  Use CMD24 to write a single block
-        int r = block_cmd(self, 24, start_block, NULL, 0, true, true);
+        int r = block_cmd(24, start_block, NULL, 0, true, true);
         if (r < 0) {
             return r;
         }
-        r = _write(self, TOKEN_DATA, buf->buf, buf->len);
+        r = _write(TOKEN_DATA, buf->buf, buf->len);
         if (r < 0) {
             return r;
         }
     } else {
         //  Use CMD25 to write multiple block
-        int r = block_cmd(self, 25, start_block, NULL, 0, true, true);
+        int r = block_cmd(25, start_block, NULL, 0, true, true);
         if (r < 0) {
             return r;
         }
 
         uint8_t *ptr = buf->buf;
         while (nblocks--) {
-            r = _write(self, TOKEN_CMD25, ptr, 512);
+            r = _write(TOKEN_CMD25, ptr, 512);
             if (r < 0) {
                 return r;
             }
             ptr += 512;
         }
 
-        cmd_nodata(self, TOKEN_STOP_TRAN, 0);
+        cmd_nodata(TOKEN_STOP_TRAN, 0);
     }
     return 0;
 }
 
-int sd_spi_writeblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf) {
-    sd_spi_check_for_deinit(self);
+int sd_spi_writeblocks(uint32_t start_block, mp_buffer_info_t *buf) {
+    sd_spi_check_for_deinit();
     if (buf->len % 512 != 0) {
     	mp_printf(&mp_plat_print, "Buffer length must be a multiple of 512\n");
         mp_raise_ValueError(NULL);
     }
-    mp_hal_pin_low(self->cs);
-    int r = writeblocks(self, start_block, buf);
-    mp_hal_pin_high(self->cs);
+    mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+    int r = writeblocks(start_block, buf);
+    mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
     return r;
 }
 
@@ -578,21 +573,16 @@ STATIC void pyb_sd_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print
 }
 
 STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    const spi_t *spi = spi_from_mp_obj(all_args[0]);
-    pin_obj_t *pin = MP_OBJ_TO_PTR(all_args[1]);
-    sd_spi_obj_t *self = m_new_obj(sd_spi_obj_t);
-	self->base.type = &pyb_sd_spi_type;
-    sd_spi_construct(self, spi, pin, 500);
-    return MP_OBJ_FROM_PTR(self);
+    sd_spi_construct(500);
+    return NULL;
 }
 
 STATIC mp_obj_t pyb_sd_spi_readblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
-	sd_spi_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint32_t block_num = mp_obj_get_int(start_block_in);
+	uint32_t block_num = mp_obj_get_int(start_block_in);
     mp_buffer_info_t buf;
     mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
 
-    int result = sd_spi_readblocks(self, block_num, &buf);
+    int result = sd_spi_readblocks(block_num, &buf);
     if (result < 0) {
         mp_raise_OSError(-result);
     }
@@ -601,13 +591,11 @@ STATIC mp_obj_t pyb_sd_spi_readblocks(mp_obj_t self_in, mp_obj_t start_block_in,
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_readblocks_obj, pyb_sd_spi_readblocks);
 
 STATIC mp_obj_t pyb_sd_spi_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in, mp_obj_t buf_in) {
-	sd_spi_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    uint32_t block_num = mp_obj_get_int(start_block_in);
+	uint32_t block_num = mp_obj_get_int(start_block_in);
     mp_buffer_info_t buf;
     mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
 
-    int result = sd_spi_writeblocks(self, block_num, &buf);
+    int result = sd_spi_writeblocks(block_num, &buf);
     if (result < 0) {
         mp_raise_OSError(-result);
     }
@@ -636,3 +624,4 @@ const mp_obj_type_t pyb_sd_spi_type = {
     .make_new = pyb_sd_spi_make_new,
     .locals_dict = (mp_obj_dict_t *)&pyb_sd_spi_locals_dict,
 };
+#endif

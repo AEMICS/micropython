@@ -24,7 +24,8 @@
  * THE SOFTWARE.
  */
 
-#pragma once
+#ifndef MICROPY_INCLUDED_STM32_SD_SPI_H
+#define MICROPY_INCLUDED_STM32_SD_SPI_H
 
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -34,18 +35,11 @@
 #include "pin.h"
 #include "spi.h"
 
-typedef struct {
-    mp_obj_base_t base;
-    const spi_t *bus;
-    pin_obj_t *cs;
-    int cdv;
-    int baudrate;
-    uint32_t sectors;
-} sd_spi_obj_t;
+void sd_spi_construct();
+void sd_spi_deinit();
+void sd_spi_check_for_deinit();
+int sd_spi_get_blockcount();
+int sd_spi_readblocks(uint32_t start_block, mp_buffer_info_t *buf);
+int sd_spi_writeblocks(uint32_t start_block, mp_buffer_info_t *buf);
 
-void sd_spi_construct(sd_spi_obj_t *self, const spi_t *spi, pin_obj_t *cs, int baudrate);
-void sd_spi_deinit(sd_spi_obj_t *self);
-void sd_spi_check_for_deinit(sd_spi_obj_t *self);
-int sd_spi_get_blockcount(sd_spi_obj_t *self);
-int sd_spi_readblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf);
-int sd_spi_writeblocks(sd_spi_obj_t *self, uint32_t start_block, mp_buffer_info_t *buf);
+#endif // MICROPY_INCLUDED_STM32_SD_SPI_H

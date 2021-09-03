@@ -258,7 +258,7 @@ STATIC const mp_rom_map_elem_t pyb_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LCD), MP_ROM_PTR(&pyb_lcd_type) },
     #endif
 
-    #if MICROPY_HW_ENABLE_STORAGE
+    #if MICROPY_HW_ENABLE_SD_SPI
     { MP_ROM_QSTR(MP_QSTR_sd_spi), MP_ROM_PTR(&pyb_sd_spi_type) }
     #endif
 };

@@ -48,8 +48,9 @@
 STATIC const void *usbd_msc_lu_data[USBD_MSC_MAX_LUN];
 STATIC uint8_t usbd_msc_lu_num;
 STATIC uint16_t usbd_msc_lu_flags;
-
-sd_spi_obj_t sd_obj;
+#if defined(MICROPY_HW_ENABLE_SD_SPI)
+//sd_spi_obj_t sd_obj;
+#endif
 bool sd_is_init = false;
 
 static inline void lu_flag_set(uint8_t lun, uint8_t flag) {
@@ -170,7 +171,7 @@ STATIC int lu_ioctl(uint8_t lun, int op, uint32_t *data) {
         }
     #endif
     }
-	#if MICROPY_HW_ENABLE_SPI_SDCARD
+	#if MICROPY_HW_ENABLE_SD_SPI
     else if (lu == &pyb_sd_spi_type){
         switch (op) {
             case MP_BLOCKDEV_IOCTL_INIT:
@@ -181,13 +182,14 @@ STATIC int lu_ioctl(uint8_t lun, int op, uint32_t *data) {
                 storage_flush();
                 return 0;
             case MP_BLOCKDEV_IOCTL_BLOCK_SIZE:
-                *data = storage_get_block_size();
+                *data = SDCARD_BLOCK_SIZE;
                 return 0;
             case MP_BLOCKDEV_IOCTL_BLOCK_COUNT:
-                *data = storage_get_block_count();
+                *data = 0; // TBD
                 return 0;
             default:
                 return -1;
+        }
     }
 	#endif
     else {
@@ -338,11 +340,11 @@ STATIC int8_t usbd_msc_Read(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16
             const pin_obj_t *pin = pin_D0;
             mp_hal_pin_config(pin, MP_HAL_PIN_MODE_ADC, MP_HAL_PIN_PULL_NONE, 0);
 
-			sd_spi_obj_t *self = m_new_obj(sd_spi_obj_t);
-    		self->base.type = &pyb_sd_spi_type;
+			//sd_spi_obj_t *self = m_new_obj(sd_spi_obj_t);
+    		//self->base.type = &pyb_sd_spi_type;
 //
 //    		sd_spi_construct(self, spi_obj, pin, blk_len);
-    		sd_is_init=true;
+    		//sd_is_init=true;
     	}
 //    	if (sd_spi_readblocks(self, buf, blk_addr)){
 //    		return 0;

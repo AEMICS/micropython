@@ -359,6 +359,7 @@ void sd_spi_construct() // int baudrate
     spi_init(spi, false);
 
     //    lock_bus_or_throw(self);
+    mp_hal_pin_output(MICROPY_HW_SD_SPI_CSN);
     mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
     const int result = init_card();
     extraclock_and_unlock_bus();
@@ -573,7 +574,7 @@ STATIC void pyb_sd_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print
 }
 
 STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    sd_spi_construct(500);
+    sd_spi_construct();
     return NULL;
 }
 

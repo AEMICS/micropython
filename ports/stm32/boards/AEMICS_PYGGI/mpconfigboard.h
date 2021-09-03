@@ -30,7 +30,7 @@
 #define MICROPY_HW_ENABLE_SD_SPI	(2)
 #define MICROPY_HW_SD_SPI_CSN     	(pin_D0)
 
-#define MICROPY_HW_ENABLE_SDCARD	(0)
+// Not used so do not define #define MICROPY_HW_ENABLE_SDCARD	(0)
 
 // External HSE is 32MHz
 // Resulting core frequency is 64MHz:

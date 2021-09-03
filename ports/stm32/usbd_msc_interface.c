@@ -253,7 +253,7 @@ STATIC int usbd_msc_Inquiry(uint8_t lun, const uint8_t *params, uint8_t *data_ou
         }
 		#elif MICROPY_HW_ENABLE_SD_SPI
         if (lu == &pyb_sd_spi_type) {
-            memcpy(data_out + 24, "SDCard", sizeof("SDCard") - 1);
+            memcpy(data_out + 24, "SD_SPI", sizeof("SD_SPI") - 1);
         }
         #elif MICROPY_HW_ENABLE_MMCARD
         else if (lu == &pyb_mmcard_type) {

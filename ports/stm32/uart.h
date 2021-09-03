@@ -31,27 +31,18 @@
 typedef enum {
     PYB_UART_NONE = 0,
     PYB_UART_1 = 1,
-    #if defined(STM32WB)
-    PYB_LPUART_1 = 2,
-    #else
     PYB_UART_2 = 2,
-    #endif
     PYB_UART_3 = 3,
     PYB_UART_4 = 4,
     PYB_UART_5 = 5,
-    #if defined(STM32L0) || defined(STM32L4) || defined(STM32G4)
-    PYB_LPUART_1 = 6,
-    #else
     PYB_UART_6 = 6,
-    #endif
     PYB_UART_7 = 7,
     PYB_UART_8 = 8,
-    #if defined(STM32H7)
-    PYB_LPUART_1 = 9,
-    #else
     PYB_UART_9 = 9,
-    #endif
     PYB_UART_10 = 10,
+    #ifdef LPUART1
+    PYB_LPUART_1 = MICROPY_HW_MAX_UART + 1,
+    #endif
 } pyb_uart_t;
 
 #define CHAR_WIDTH_8BIT (0)
@@ -98,6 +89,8 @@ void uart_irq_handler(mp_uint_t uart_id);
 
 void uart_attach_to_repl(pyb_uart_obj_t *self, bool attached);
 uint32_t uart_get_baudrate(pyb_uart_obj_t *self);
+void uart_set_baudrate(pyb_uart_obj_t *self, uint32_t baudrate);
+
 mp_uint_t uart_rx_any(pyb_uart_obj_t *uart_obj);
 bool uart_rx_wait(pyb_uart_obj_t *self, uint32_t timeout);
 int uart_rx_char(pyb_uart_obj_t *uart_obj);

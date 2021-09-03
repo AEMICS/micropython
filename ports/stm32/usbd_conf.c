@@ -98,7 +98,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
         #endif
 
         // Enable USB FS Clocks
-        #if !MICROPY_HW_USB_IS_MULTI_OTG
+        #if !MICROPY_HW_USB_IS_MULTI_OTG || defined(STM32G473xx)
         __HAL_RCC_USB_CLK_ENABLE();
         #else
         __USB_OTG_FS_CLK_ENABLE();

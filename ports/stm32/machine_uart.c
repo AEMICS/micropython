@@ -77,13 +77,11 @@ STATIC void pyb_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
     pyb_uart_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (!self->is_enabled) {
         #ifdef LPUART1
-        if (self->uart_id == PYB_LPUART_1)
-        #else
-        if (0)
+        if (self->uart_id == PYB_LPUART_1) {
+            mp_printf(print, "UART('LP1')");
+        } else
         #endif
         {
-            mp_printf(print, "UART('LP1')");
-        } else {
             mp_printf(print, "UART(%u)", self->uart_id);
         }
     } else {
@@ -108,14 +106,12 @@ STATIC void pyb_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
             bits -= 1;
         }
         #ifdef LPUART1
-        if (self->uart_id == PYB_LPUART_1)
-        #else
-        if (0)
-        #endif
-        {
+        if (self->uart_id == PYB_LPUART_1) {
             mp_printf(print, "UART('LP1', baudrate=%u, bits=%u, parity=",
                 uart_get_baudrate(self), bits);
-        } else {
+        } else
+        #endif
+        {
             mp_printf(print, "UART(%u, baudrate=%u, bits=%u, parity=",
                 self->uart_id, uart_get_baudrate(self), bits);
         }
@@ -298,7 +294,7 @@ STATIC mp_obj_t pyb_uart_init_helper(pyb_uart_obj_t *self, size_t n_args, const 
 /// the bus, if any).  If extra arguments are given, the bus is initialised.
 /// See `init` for parameters of initialisation.
 ///
-/// The physical pins of the UART busses are:
+/// The physical pins of the UART buses are:
 ///
 ///   - `UART(4)` is on `XA`: `(TX, RX) = (X1, X2) = (PA0, PA1)`
 ///   - `UART(1)` is on `XB`: `(TX, RX) = (X9, X10) = (PB6, PB7)`
@@ -359,7 +355,7 @@ STATIC mp_obj_t pyb_uart_make_new(const mp_obj_type_t *type, size_t n_args, size
             uart_id = PYB_LPUART_1;
         #endif
         #ifdef LPUART1
-        } else if (strcmp(port, "LP1") == 0) {
+        } else if (strcmp(port, "LP1") == 0 && uart_exists(PYB_LPUART_1)) {
             uart_id = PYB_LPUART_1;
         #endif
         } else {

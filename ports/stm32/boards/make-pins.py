@@ -25,6 +25,7 @@ CONDITIONAL_VAR = {
     "I2S": "MICROPY_HW_ENABLE_I2S{num}",
     "SPI": "MICROPY_HW_SPI{num}_SCK",
     "UART": "MICROPY_HW_UART{num}_TX",
+    "LPUART": "MICROPY_HW_LPUART{num}_TX",
     "USART": "MICROPY_HW_UART{num}_TX",
     "LPUART": "MICROPY_HW_LPUART{num}_TX",
     "SDMMC": "MICROPY_HW_SDMMC{num}_CK",

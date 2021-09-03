@@ -827,7 +827,7 @@ void USART3_IRQHandler(void) {
 }
 #endif
 
-#if defined(USART4)
+#if defined(UART4)
 void UART4_IRQHandler(void) {
     IRQ_ENTER(UART4_IRQn);
     uart_irq_handler(4);
@@ -835,7 +835,7 @@ void UART4_IRQHandler(void) {
 }
 #endif
 
-#if defined(USART5)
+#if defined(UART5)
 void UART5_IRQHandler(void) {
     IRQ_ENTER(UART5_IRQn);
     uart_irq_handler(5);
@@ -883,14 +883,14 @@ void UART10_IRQHandler(void) {
 }
 #endif
 
+#endif
+
 #if defined(LPUART1)
 void LPUART1_IRQHandler(void) {
     IRQ_ENTER(LPUART1_IRQn);
     uart_irq_handler(PYB_LPUART_1);
     IRQ_EXIT(LPUART1_IRQn);
 }
-#endif
-
 #endif
 
 #if MICROPY_PY_PYB_LEGACY

@@ -32,8 +32,8 @@
 #include "py/stream.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
-#include "lib/utils/interrupt_char.h"
-#include "lib/utils/mpirq.h"
+#include "shared/runtime/interrupt_char.h"
+#include "shared/runtime/mpirq.h"
 #include "uart.h"
 #include "irq.h"
 #include "pendsv.h"
@@ -498,7 +498,7 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
 
     uart_obj->uartx = UARTx;
 
-    // init UARTx
+    // Set the initialisation parameters for the UART.
     UART_HandleTypeDef huart;
     memset(&huart, 0, sizeof(huart));
     huart.Instance = UARTx;
@@ -509,9 +509,31 @@ bool uart_init(pyb_uart_obj_t *uart_obj,
     huart.Init.Mode = UART_MODE_TX_RX;
     huart.Init.HwFlowCtl = flow;
     huart.Init.OverSampling = UART_OVERSAMPLING_16;
+
     #if defined(STM32G4)  // H7 and WB also have fifo..
     huart.FifoMode = UART_FIFOMODE_ENABLE;
     #endif
+
+    #if !defined(STM32F4)
+    huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    #endif
+
+    #if defined(STM32H7) || defined(STM32WB)
+    // Compute the smallest prescaler that will allow the given baudrate.
+    uint32_t presc = UART_PRESCALER_DIV1;
+    if (uart_obj->uart_id == PYB_LPUART_1) {
+        uint32_t source_clk = uart_get_source_freq(uart_obj);
+        for (; presc < UART_PRESCALER_DIV256; ++presc) {
+            uint32_t brr = UART_DIV_LPUART(source_clk, baudrate, presc);
+            if (brr <= LPUART_BRR_MASK) {
+                break;
+            }
+        }
+    }
+    huart.Init.ClockPrescaler = presc;
+    #endif
+
+    // Initialise the UART hardware.
     HAL_UART_Init(&huart);
 
     // Disable all individual UART IRQs, but enable the global handler
@@ -759,6 +781,15 @@ uint32_t uart_get_source_freq(pyb_uart_obj_t *self) {
 }
 
 uint32_t uart_get_baudrate(pyb_uart_obj_t *self) {
+    #if defined(LPUART1)
+    if (self->uart_id == PYB_LPUART_1) {
+        return LL_LPUART_GetBaudRate(self->uartx, uart_get_source_freq(self)
+            #if defined(STM32H7) || defined(STM32WB)
+            , self->uartx->PRESC
+            #endif
+            );
+    }
+    #endif
     return LL_USART_GetBaudRate(self->uartx, uart_get_source_freq(self),
         #if defined(STM32H7) || defined(STM32WB) || defined(STM32G4)
         self->uartx->PRESC,
@@ -767,6 +798,16 @@ uint32_t uart_get_baudrate(pyb_uart_obj_t *self) {
 }
 
 void uart_set_baudrate(pyb_uart_obj_t *self, uint32_t baudrate) {
+    #if defined(LPUART1)
+    if (self->uart_id == PYB_LPUART_1) {
+        LL_LPUART_SetBaudRate(self->uartx, uart_get_source_freq(self),
+            #if defined(STM32H7) || defined(STM32WB)
+            LL_LPUART_PRESCALER_DIV1,
+            #endif
+            baudrate);
+        return;
+    }
+    #endif
     LL_USART_SetBaudRate(self->uartx, uart_get_source_freq(self),
         #if defined(STM32H7) || defined(STM32WB) || defined(STM32G4)
         LL_USART_PRESCALER_DIV1,

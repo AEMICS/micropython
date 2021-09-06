@@ -7,6 +7,8 @@
 #define MICROPY_HW_USB_MANUFACTURER_STRING    "AEMICS"
 #define MICROPY_HW_USB_PRODUCT_FS_STRING   MICROPY_HW_BOARD_NAME
 
+#define FACTORY_RESET_MAKE_FILES    factory_reset_make_files
+
 #define MICROPY_PY_PYB_LEGACY       (0)
 
 #define MICROPY_PY_STM              (1)

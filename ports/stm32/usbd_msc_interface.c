@@ -156,7 +156,6 @@ STATIC int lu_ioctl(uint8_t lun, int op, uint32_t *data) {
                 if (!sdcard_power_on()) {
                     return -1;
                 }
-                sd_spi_construct();
                 *data = 0;
                 return 0;
             case MP_BLOCKDEV_IOCTL_SYNC:

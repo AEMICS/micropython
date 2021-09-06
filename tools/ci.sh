@@ -302,6 +302,7 @@ function ci_aemics_stm32_build {
     make ${MAKEOPTS} -C mpy-cross
     make ${MAKEOPTS} -C ports/stm32 submodules
     make ${MAKEOPTS} -C ports/stm32 BOARD=AEMICS_PYGGI
+    make ${MAKEOPTS} -C ports/stm32 BOARD=AEMICS_PYGLET
 }
 
 

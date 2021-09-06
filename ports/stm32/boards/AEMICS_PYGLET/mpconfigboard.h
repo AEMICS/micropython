@@ -16,29 +16,29 @@
 void board_early_init(void);
 
 #if MICROPY_HW_USB_FS == 1
-#ifdef USBD_MANUFACTURER_STRING
-#undef USBD_MANUFACTURER_STRING
+#ifdef MICROPY_HW_USB_MANUFACTURER_STRING
+#undef MICROPY_HW_USB_MANUFACTURER_STRING
 #endif
-#define USBD_MANUFACTURER_STRING    "AEMICS"
-#ifdef USBD_PRODUCT_FS_STRING
-#undef USBD_PRODUCT_FS_STRING
+#define MICROPY_HW_USB_MANUFACTURER_STRING    "AEMICS"
+#ifdef MICROPY_HW_USB_PRODUCT_FS_STRING
+#undef MICROPY_HW_USB_PRODUCT_FS_STRING
 #endif
 #endif
-#define USBD_PRODUCT_FS_STRING   MICROPY_HW_BOARD_NAME
+#define MICROPY_HW_USB_PRODUCT_FS_STRING   MICROPY_HW_BOARD_NAME
 
 
-// ports/stm32/mpconfigport.h
-#define MICROPY_PY_LWIP      (0)  // Geen ETH
-#define MICROPY_PY_USSL      (0)
-#define MICROPY_SSL_MBEDTLS  (0)
-#define MICROPY_PY_UASYNCIO  (0)
-#define MICROPY_PY_UZLIB     (0)
-#define MICROPY_PY_UJSON     (1)
-#define MICROPY_PY_URE       (0)
-#define MICROPY_PY_FRAMEBUF  (0)
-#define MICROPY_PY_USOCKET   (0)
-#define MICROPY_PY_NETWORK   (0)
-#define MICROPY_PERSISTENT_CODE_LOAD (1)
+// // ports/stm32/mpconfigport.h
+// #define MICROPY_PY_LWIP      (0)  // Geen ETH
+// #define MICROPY_PY_USSL      (0)
+// #define MICROPY_SSL_MBEDTLS  (0)
+// #define MICROPY_PY_UASYNCIO  (0)
+// #define MICROPY_PY_UZLIB     (0)
+// #define MICROPY_PY_UJSON     (1)
+// #define MICROPY_PY_URE       (0)
+// #define MICROPY_PY_FRAMEBUF  (0)
+// #define MICROPY_PY_USOCKET   (0)
+// #define MICROPY_PY_NETWORK   (0)
+// #define MICROPY_PERSISTENT_CODE_LOAD (1)
 
 // The board has an 16MHz HSI, the following gives 170MHz CPU speed and 48MHz for USB
 #define MICROPY_HW_CLK_USE_HSE      (0)

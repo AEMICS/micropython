@@ -35,10 +35,14 @@
 #include "pin.h"
 #include "spi.h"
 
+// this is a fixed size and should not be changed
+#define SDCARD_BLOCK_SIZE (512)
+int sd_spi_ioctl(int cmd);
 void sd_spi_construct();
 void sd_spi_deinit();
 void sd_spi_check_for_deinit();
 int sd_spi_get_blockcount();
+bool sd_spi_card_inserted();
 int sd_spi_readblocks(uint32_t start_block, mp_buffer_info_t *buf);
 int sd_spi_writeblocks(uint32_t start_block, mp_buffer_info_t *buf);
 

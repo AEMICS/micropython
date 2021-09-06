@@ -36,6 +36,7 @@
 #include "py/mperrno.h"
 #include <string.h>
 #include "storage.h"
+#include "extmod/vfs.h"
 
 
 #if MICROPY_HW_ENABLE_SD_SPI
@@ -66,6 +67,35 @@
 const spi_t *spi = &spi_obj[MICROPY_HW_ENABLE_SD_SPI-1]; // spi_from_mp_obj(all_args[0]);
 int cdv;
 uint32_t sectors;
+
+int sd_spi_ioctl(int cmd) {
+	switch (cmd) {
+		case MP_BLOCKDEV_IOCTL_INIT:
+			if (!sd_spi_card_inserted()) {
+				return -1; // error
+			}
+			return 0; // success
+
+		case MP_BLOCKDEV_IOCTL_DEINIT:
+			return 0; // success
+
+		case MP_BLOCKDEV_IOCTL_SYNC:
+			// nothing to do
+			return 0; // success
+
+		case MP_BLOCKDEV_IOCTL_BLOCK_COUNT:
+			return 0; //TBD: sdcard_get_capacity_in_bytes() / SDCARD_BLOCK_SIZE;
+
+		case MP_BLOCKDEV_IOCTL_BLOCK_SIZE:
+			return SDCARD_BLOCK_SIZE;
+
+		// MP_BLOCKDEV_IOCTL_BLOCK_ERASE
+
+		default: // unknown command
+			return -1; // error
+	}
+	return -MP_EINVAL;
+}
 
 bool spi_write(const uint8_t *data, size_t len)
 {
@@ -361,6 +391,10 @@ void sd_spi_construct() // int baudrate
     //    lock_bus_or_throw(self);
     mp_hal_pin_output(MICROPY_HW_SD_SPI_CSN);
     mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+
+	#if defined(MICROPY_HW_SD_SPI_CD)
+    mp_hal_pin_input(MICROPY_HW_SD_SPI_CD);
+	#endif
     const int result = init_card();
     extraclock_and_unlock_bus();
 
@@ -391,6 +425,19 @@ int sd_spi_get_blockcount()
 {
     sd_spi_check_for_deinit();
     return sectors;
+}
+
+bool sd_spi_card_inserted()
+{
+	#if defined(MICROPY_HW_SD_SPI_CD)
+	int value =  mp_hal_pin_read(MICROPY_HW_SD_SPI_CD);
+	if (value == MICROPY_HW_SD_SPI_CD_POL)
+		return true;
+	else
+		return false;
+	#else
+		return true; // assuming it is available
+	#endif
 }
 
 int readinto(void *buf, size_t size)
@@ -605,8 +652,8 @@ STATIC mp_obj_t pyb_sd_spi_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_writeblocks_obj, pyb_sd_spi_writeblocks);
 
 STATIC mp_obj_t pyb_sd_spi_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
-//    return mp_const_none;
-	return 0;
+	mp_int_t cmd = mp_obj_get_int(cmd_in);
+	return MP_OBJ_NEW_SMALL_INT(sd_spi_ioctl(cmd));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_ioctl_obj, pyb_sd_spi_ioctl);
 

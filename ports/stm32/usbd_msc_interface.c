@@ -156,6 +156,7 @@ STATIC int lu_ioctl(uint8_t lun, int op, uint32_t *data) {
                 if (!sdcard_power_on()) {
                     return -1;
                 }
+                sd_spi_construct();
                 *data = 0;
                 return 0;
             case MP_BLOCKDEV_IOCTL_SYNC:
@@ -175,17 +176,18 @@ STATIC int lu_ioctl(uint8_t lun, int op, uint32_t *data) {
     else if (lu == &pyb_sd_spi_type){
         switch (op) {
             case MP_BLOCKDEV_IOCTL_INIT:
-                storage_init();
-                *data = 0;
-                return 0;
+            	if (!sd_spi_ioctl(MP_BLOCKDEV_IOCTL_INIT)) {
+					return -1;
+				}
+				*data = 0;
+				return 0;
             case MP_BLOCKDEV_IOCTL_SYNC:
-                storage_flush();
-                return 0;
+            	return sd_spi_ioctl(MP_BLOCKDEV_IOCTL_SYNC);
             case MP_BLOCKDEV_IOCTL_BLOCK_SIZE:
-                *data = SDCARD_BLOCK_SIZE;
+                *data = sd_spi_ioctl(MP_BLOCKDEV_IOCTL_BLOCK_SIZE);
                 return 0;
             case MP_BLOCKDEV_IOCTL_BLOCK_COUNT:
-                *data = 0; // TBD
+                *data = sd_spi_ioctl(MP_BLOCKDEV_IOCTL_BLOCK_COUNT); // TBD
                 return 0;
             default:
                 return -1;

@@ -122,7 +122,13 @@ class BQ24160():
     def set_charge_on(self):
         self.pin_chg_dis.off()
 
-
+    def set_charge_voltage(self, voltage): # Set battery regulator voltage (3.5V-4.44V w/ steps of 0.02V)
+        set_voltage = (voltage - 3.50) * 100
+        set_voltage_int = round(set_voltage) 
+        reg = set_voltage_int << 1
+        reg &= ~0x02 # Bitmask
+        self.write_batt_control(reg)
+        
     # Reading
     def read_stat_contr(self):
         return self._read_one(self.STAT_CONTR)

@@ -59,11 +59,22 @@ void board_early_init(void);
 #define MICROPY_HW_UART4_RX         (pin_C11)
 
 // xSPI
+//SPI1
+#define MICROPY_HW_SPI1_NSS         (pin_A3)
+#define MICROPY_HW_SPI1_SCK         (pin_A5)
+#define MICROPY_HW_SPI1_MISO        (pin_B4)
+#define MICROPY_HW_SPI1_MOSI        (pin_B5)
 //SPI2
 #define MICROPY_HW_SPI2_NSS         (pin_B12)
 #define MICROPY_HW_SPI2_SCK         (pin_B13)
 #define MICROPY_HW_SPI2_MISO        (pin_B14)
 #define MICROPY_HW_SPI2_MOSI        (pin_B15)
+// //SPI3
+// #define MICROPY_HW_SPI3_NSS         (pin_A15)
+// #define MICROPY_HW_SPI3_SCK         (pin_C10)
+// #define MICROPY_HW_SPI3_MISO        (pin_C11)
+// #define MICROPY_HW_SPI3_MOSI        (pin_C12)
+
 //QSPI1
 // 8MBit external QSPI flash, used for either the filesystem or XIP memory mapped
 #define MICROPY_HW_QSPIFLASH_SIZE_BITS_LOG2 (23)

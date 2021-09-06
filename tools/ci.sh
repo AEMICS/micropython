@@ -301,7 +301,7 @@ function ci_stm32_nucleo_build {
 function ci_aemics_stm32_build {
     make ${MAKEOPTS} -C mpy-cross
     make ${MAKEOPTS} -C ports/stm32 submodules
-    make ${MAKEOPTS} -C ports/stm32 BOARD=AEMICS_51041100
+    make ${MAKEOPTS} -C ports/stm32 BOARD=AEMICS_PYGGI
 }
 
 

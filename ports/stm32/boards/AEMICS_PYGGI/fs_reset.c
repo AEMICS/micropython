@@ -31,8 +31,7 @@ static const char fresh_pybcdc_inf[] =
 ;
 
 static const char fresh_readme_txt[] =
-    "Welcome to your PYggi board\r\n"
-    "This is a MicroPython module\r\n"
+    "Welcome to your AEMICS PYggi MicroPython board!\r\n"
     "\r\n"
     "You can get started right away by writing your Python code in 'main.py'.\r\n"
     "\r\n"

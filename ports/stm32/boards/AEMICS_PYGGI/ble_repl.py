@@ -169,6 +169,7 @@ class BLEUART:
     def _advertise(self, interval_us=500000):
         self._ble.gap_advertise(interval_us, adv_data=self._payload)
 
+
 _MP_STREAM_POLL = const(3)
 _MP_STREAM_POLL_RD = const(0x0001)
 

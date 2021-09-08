@@ -165,13 +165,11 @@ class BQ24160():
 
     def write_stat_contr(self, data):
         self._mask_check(data, self.STAT_CONTR_w_mask)
-        self._write_one(self.STAT_CONTR,
-                        data & self.STAT_CONTR_w_mask)
+        self._write_one(self.STAT_CONTR, data & self.STAT_CONTR_w_mask)
 
     def write_batt_stat(self, data):
         self._mask_check(data, self.BATT_SUP_STAT_w_mask)
-        self._write_one(self.BATT_SUP_STAT,
-                        data & self.BATT_SUP_STAT_w_mask)
+        self._write_one(self.BATT_SUP_STAT, data & self.BATT_SUP_STAT_w_mask)
 
     def write_control(self, data):
         self._mask_check(data, 0xFF)

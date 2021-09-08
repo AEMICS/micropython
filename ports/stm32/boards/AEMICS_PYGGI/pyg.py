@@ -62,8 +62,10 @@ class LM75:
         # sign bit: subtract once to clear, 2nd time to add its value
         return temperature if temperature < 128 else temperature - 256
 
+
 class BQ24160Exception(Exception):
     pass
+
 
 class BQ24160:
     # registers

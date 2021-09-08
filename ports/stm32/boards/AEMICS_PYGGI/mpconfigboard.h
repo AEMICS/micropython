@@ -2,7 +2,7 @@
  * MIT License; Copyright (c) 2019 Damien P. George
  */
 
-#define MICROPY_HW_BOARD_NAME       "AEPYM"
+#define MICROPY_HW_BOARD_NAME       "AEMICS PYggi"
 #define MICROPY_HW_MCU_NAME         "STM32WB55VGQ6"
 #ifdef USBD_MANUFACTURER_STRING
 #undef USBD_MANUFACTURER_STRING
@@ -25,7 +25,7 @@
 #define MICROPY_HW_ENABLE_TIMER     (1)
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (1)
-#define MICROPY_HW_FLASH_FS_LABEL   "aemics"
+#define MICROPY_HW_FLASH_FS_LABEL   "PYggi"
 #define MICROPY_HW_STM32WB_FLASH_SYNCRONISATION (1)
 
 // External HSE is 32MHz

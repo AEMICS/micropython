@@ -336,20 +336,12 @@ STATIC int8_t usbd_msc_Read(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16
 	#elif MICROPY_HW_ENABLE_SD_SPI
     if (lu == &pyb_sd_spi_type){
     	if(!sd_is_init){
-//    		const pyb_spi_obj_t spi_obj = mp_machine_spi_p_t.make_new(&pyb_spi_obj_t);
-
-            const pin_obj_t *pin = pin_D0;
-            mp_hal_pin_config(pin, MP_HAL_PIN_MODE_ADC, MP_HAL_PIN_PULL_NONE, 0);
-
-			//sd_spi_obj_t *self = m_new_obj(sd_spi_obj_t);
-    		//self->base.type = &pyb_sd_spi_type;
-//
-//    		sd_spi_construct(self, spi_obj, pin, blk_len);
-    		//sd_is_init=true;
+    		sd_spi_construct();
+		    sd_is_init=true;
     	}
-//    	if (sd_spi_readblocks(self, buf, blk_addr)){
-//    		return 0;
-//    	}
+    	if (sd_spi_readblocks(buf, blk_addr, blk_len)){
+    		return 0;
+    	}
     }
 	#endif
     }
@@ -379,9 +371,13 @@ STATIC int8_t usbd_msc_Write(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint1
     }
 	#elif MICROPY_HW_ENABLE_SD_SPI
     else if (lu == &pyb_sd_spi_type){
-//    	if(sd_spi_writeblocks(buf, blk_addr, blk_len)==0){
-//    		return 0;
-//    	}
+    	if(!sd_is_init){
+			sd_spi_construct();
+			sd_is_init=true;
+		}
+    	if(sd_spi_writeblocks(buf, blk_addr, blk_len)==0){
+    		return 0;
+    	}
     }
     #endif
 

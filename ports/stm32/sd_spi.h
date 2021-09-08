@@ -31,9 +31,29 @@
 #include "py/runtime.h"
 #include "py/objarray.h"
 #include "errno.h"
-
+#include "py/mphal.h"
+#include "extmod/vfs_fat.h"
 #include "pin.h"
 #include "spi.h"
+
+typedef struct {
+	//const mp_hal_pin_obj_t *cs;
+//#if defined(MICROPY_HW_SD_SPI_CD)
+	//const mp_hal_pin_obj_t *cd;
+//#endif
+	const spi_t *bus;
+    int cdv;
+    int baudrate;
+    uint32_t sectors;
+} sd_spi_obj_t;
+
+
+typedef struct _pyb_sd_spi_obj_t {
+    mp_obj_base_t base;
+    uint32_t start; // in bytes
+    uint32_t len; // in bytes
+    bool use_native_block_size;
+} pyb_sd_spi_obj_t;
 
 // this is a fixed size and should not be changed
 #define SDCARD_BLOCK_SIZE (512)
@@ -43,7 +63,11 @@ void sd_spi_deinit();
 void sd_spi_check_for_deinit();
 int sd_spi_get_blockcount();
 bool sd_spi_card_inserted();
-int sd_spi_readblocks(uint32_t start_block, mp_buffer_info_t *buf);
-int sd_spi_writeblocks(uint32_t start_block, mp_buffer_info_t *buf);
+int sd_spi_readblocks(uint8_t *dest, uint32_t start_block, uint32_t num_blocks);
+int sd_spi_writeblocks(uint8_t *src, uint32_t start_block, uint32_t num_blocks);
+void sd_spi_init_vfs(fs_user_mount_t *vfs, int part);
+
+extern const struct _mp_obj_base_t pyb_sd_spi_obj;
+
 
 #endif // MICROPY_INCLUDED_STM32_SD_SPI_H

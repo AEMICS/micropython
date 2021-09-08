@@ -2,6 +2,8 @@
  * MIT License; Copyright (c) 2019 Damien P. George
  */
 
+#define MICROPY_ERROR_REPORTING 	MICROPY_ERROR_REPORTING_DETAILED
+
 #define MICROPY_HW_BOARD_NAME       "AEPYM"
 #define MICROPY_HW_MCU_NAME         "STM32WB55VGQ6"
 #define MICROPY_HW_USB_MANUFACTURER_STRING    "AEMICS"
@@ -21,12 +23,12 @@
 #define MICROPY_HW_STM32WB_FLASH_SYNCRONISATION (1)
 #define MICROPY_HW_SPIFLASH_ENABLE_CACHE    (1)
 #define MICROPY_HW_ENABLE_STORAGE   (1)
+#define MICROPY_HW_ENABLE_SDCARD	(0)
 #define MICROPY_HW_ENABLE_SD_SPI	(2)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
 #define MICROPY_HW_SD_SPI_CSN     	(pin_D0)
 #define MICROPY_HW_SD_SPI_CD     	(pin_B0)
 #define MICROPY_HW_SD_SPI_CD_POL   	(0) // 0 == input low for card available
-
-// Not used so do not define #define MICROPY_HW_ENABLE_SDCARD	(0)
 
 // External HSE is 32MHz
 // Resulting core frequency is 64MHz:

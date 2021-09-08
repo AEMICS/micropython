@@ -15,11 +15,12 @@ LM75_ADDR = const(0x48)
 # BQ24160_addr 7bit I2C address
 BQ24160_ADDR = const(0x6B)
 
+
 class LM75Exception(Exception):
     pass
 
 
-class LM75():
+class LM75:
     # registers
     TEMP_REGISTER = const(0)
     CONF_REGISTER = const(1)
@@ -64,7 +65,7 @@ class LM75():
 class BQ24160Exception(Exception):
     pass
 
-class BQ24160():
+class BQ24160:
     # registers
 
     STAT_CONTR = const(0)
@@ -92,7 +93,7 @@ class BQ24160():
         self.default()
         self.timer = pyb.Timer(16, freq=0.1)
         # Can't put a 'self' in a timer callback so direct command
-        self.timer.callback(lambda t: I2C(3).writeto_mem(0x6B, 0, b'\x80'))
+        self.timer.callback(lambda t: I2C(3).writeto_mem(0x6B, 0, b"\x80"))
         self.pin_chg_dis = pyb.Pin.board.CHARGE_DISABLE
         self.pin_chg_dis.init(mode=pyb.Pin.OUT)
 
@@ -119,13 +120,15 @@ class BQ24160():
     def set_charge_on(self):
         self.pin_chg_dis.off()
 
-    def set_charge_voltage(self, voltage):  # Set battery regulator voltage (3.5V-4.44V w/ steps of 0.02V)
+    def set_charge_voltage(
+        self, voltage
+    ):  # Set battery regulator voltage (3.5V-4.44V w/ steps of 0.02V)
         set_voltage = (voltage - 3.50) * 100
         set_voltage_int = round(set_voltage)
         reg = set_voltage_int << 1
         reg &= ~0x02  # Bitmask
         self.write_batt_control(reg)
-        
+
     # Reading
     def read_stat_contr(self):
         return self._read_one(self.STAT_CONTR)
@@ -154,7 +157,7 @@ class BQ24160():
     # Writing
     @staticmethod
     def _mask_check(data, mask):
-        if data.__class__.__name__ != 'int':
+        if data.__class__.__name__ != "int":
             raise BQ24160Exception("Data must be of type int")
 
         if data & (~mask & 0xFF):

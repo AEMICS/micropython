@@ -25,7 +25,7 @@
 #define MICROPY_HW_ENABLE_STORAGE   (1)
 #define MICROPY_HW_ENABLE_SDCARD	(0)
 #define MICROPY_HW_ENABLE_SD_SPI	(2)
-#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (0)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (1)
 #define MICROPY_HW_SD_SPI_CSN     	(pin_D0)
 #define MICROPY_HW_SD_SPI_CD     	(pin_B0)
 #define MICROPY_HW_SD_SPI_CD_POL   	(0) // 0 == input low for card available

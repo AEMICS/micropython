@@ -31,12 +31,15 @@
 //#include "shared-bindings/time/__init__.h"
 //#include "shared-bindings/util.h"
 //#include "shared-module/sdcardio/SDCard.h"
-#include <sd_spi.h>
-#include "pin.h"
-#include "py/mperrno.h"
 #include <string.h>
-#include "storage.h"
-#include "extmod/vfs.h"
+
+#include "py/runtime.h"
+#include "py/mperrno.h"
+//#include "storage.h"
+#include "extmod/vfs_fat.h"
+
+#include "sd_spi.h"
+#include "pin.h"
 
 
 #if MICROPY_HW_ENABLE_SD_SPI
@@ -623,6 +626,9 @@ STATIC void pyb_sd_spi_print(const mp_print_t *print, mp_obj_t self_in, mp_print
     return;
 }
 
+
+const mp_obj_base_t pyb_sd_spi_obj = {&pyb_sd_spi_type};
+
 STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     sd_spi_construct();
 
@@ -635,7 +641,7 @@ STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, si
 #endif
     self->cdv = cdv;
 	*/
-    return MP_OBJ_FROM_PTR(&pyb_sd_spi_type);
+    return MP_OBJ_FROM_PTR(&pyb_sd_spi_obj);
 }
 
 STATIC mp_obj_t sd_spi_present(mp_obj_t self) {

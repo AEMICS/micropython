@@ -67,6 +67,7 @@ int sd_spi_readblocks(uint8_t *dest, uint32_t start_block, uint32_t num_blocks);
 int sd_spi_writeblocks(uint8_t *src, uint32_t start_block, uint32_t num_blocks);
 void sd_spi_init_vfs(fs_user_mount_t *vfs, int part);
 
+extern const struct _mp_obj_type_t pyb_sd_spi_type;
 extern const struct _mp_obj_base_t pyb_sd_spi_obj;
 
 

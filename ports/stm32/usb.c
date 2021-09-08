@@ -43,6 +43,7 @@
 #include "bufhelper.h"
 #include "storage.h"
 #include "sdcard.h"
+#include "sd_spi.h"
 #include "usb.h"
 
 #if MICROPY_HW_ENABLE_USB
@@ -575,7 +576,7 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
                 || type == &pyb_mmcard_type
                 #endif
 				#if MICROPY_HW_ENABLE_SD_SPI
-				|| type == &pyb_sd_spi_type
+				|| type == (mp_obj_type_t *)&pyb_sd_spi_type
 				#endif
                 ) {
                 msc_unit[i] = type;

@@ -46,6 +46,7 @@
 #include "adc.h"
 #include "storage.h"
 #include "sdcard.h"
+#include "sd_spi.h"
 #include "accel.h"
 #include "servo.h"
 #include "dac.h"

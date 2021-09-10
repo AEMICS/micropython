@@ -576,7 +576,7 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
                 || type == &pyb_mmcard_type
                 #endif
 				#if MICROPY_HW_ENABLE_SD_SPI
-				|| type == (mp_obj_type_t *)&pyb_sd_spi_type
+				|| type == &pyb_sd_spi_type
 				#endif
                 ) {
                 msc_unit[i] = type;

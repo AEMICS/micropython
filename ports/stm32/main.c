@@ -439,11 +439,11 @@ void stm32_main(uint32_t reset_mode) {
     #if MICROPY_HW_ENABLE_SDCARD
     sdcard_init();
     #endif
+	#if MICROPY_HW_ENABLE_SD_SPI
+	sd_spi_construct();
+	#endif
     #if MICROPY_HW_ENABLE_STORAGE
     storage_init();
-    #endif
-	#if MICROPY_HW_ENABLE_SD_SPI
-    sd_spi_construct();
     #endif
     #if MICROPY_PY_LWIP
     // lwIP doesn't allow to reinitialise itself by subsequent calls to this function

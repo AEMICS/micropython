@@ -42,15 +42,12 @@
 // This flag is needed to support removal of the medium, so that the USB drive
 // can be unmounted and won't be remounted automatically.
 #define FLAGS_STARTED (0x01)
-
 #define FLAGS_READONLY (0x02)
 
 STATIC const void *usbd_msc_lu_data[USBD_MSC_MAX_LUN];
 STATIC uint8_t usbd_msc_lu_num;
 STATIC uint16_t usbd_msc_lu_flags;
-#if defined(MICROPY_HW_ENABLE_SD_SPI)
-//sd_spi_obj_t sd_obj;
-#endif
+
 bool sd_is_init = false;
 
 static inline void lu_flag_set(uint8_t lun, uint8_t flag) {
@@ -339,7 +336,7 @@ STATIC int8_t usbd_msc_Read(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16
     		sd_spi_construct();
 		    sd_is_init=true;
     	}
-    	if (sd_spi_readblocks(buf, blk_addr, blk_len)){
+    	if (sd_spi_readblocks(buf, blk_addr, blk_len) == 0){
     		return 0;
     	}
     }
@@ -375,7 +372,7 @@ STATIC int8_t usbd_msc_Write(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint1
 			sd_spi_construct();
 			sd_is_init=true;
 		}
-    	if(sd_spi_writeblocks(buf, blk_addr, blk_len)==0){
+    	if(sd_spi_writeblocks(buf, blk_addr, blk_len) == 0){
     		return 0;
     	}
     }

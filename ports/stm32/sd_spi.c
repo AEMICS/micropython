@@ -75,8 +75,11 @@ int sd_spi_ioctl(int cmd) {
 	switch (cmd) {
 		case MP_BLOCKDEV_IOCTL_INIT:
 			if (!sd_spi_card_inserted()) {
+				DEBUG_PRINT("MP_BLOCKDEV_IOCTL_INIT fail\n");
 				return -1; // error
+
 			}
+			DEBUG_PRINT("MP_BLOCKDEV_IOCTL_INIT OK\n");
 			return 0; // success
 
 		case MP_BLOCKDEV_IOCTL_DEINIT:
@@ -174,10 +177,10 @@ STATIC int cmd(int cmd, int arg, void *response_buf, size_t response_len, bool d
     cmdbuf[4] = arg & 0xff;
     cmdbuf[5] = CRC7(cmdbuf, 5);
 
-    if (wait)
-    {
-        wait_for_ready();
-    }
+    //if (wait)
+    //{
+    //    wait_for_ready();
+    //}
 
     clock_card(1);
 	mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
@@ -224,10 +227,13 @@ STATIC int cmd(int cmd, int arg, void *response_buf, size_t response_len, bool d
         }
     }
 
-    clock_card(1);
+	if (wait)
+	{
+		wait_for_ready();
+	}
 	mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
-	wait_for_ready();
 
+	DEBUG_PRINT("cmd %3d [%02x] return %d\n", cmd, cmd, cmdbuf[0]);
     return cmdbuf[0];
 }
 
@@ -263,10 +269,10 @@ STATIC const int init_card_v2() {
 	for (int i = 0; i < CMD_TIMEOUT; i++) {
 		uint8_t ocr[4];
 		mp_hal_delay_ms(50);
-		cmd(58, 0, ocr, sizeof(ocr), false, true);
-		cmd(55, 0, NULL, 0, true, true);
+		cmd(58, 0, ocr, sizeof(ocr), false, false);
+		cmd(55, 0, NULL, 0, true, false);
 		if (cmd(41, 0x40000000, NULL, 0, true, true) == 0) {
-			cmd(58, 0, ocr, sizeof(ocr), false, true);
+			cmd(58, 0, ocr, sizeof(ocr), false, false);
 			if ((ocr[0] & 0x40) != 0) {
 				cdv = 1;
 			}
@@ -285,13 +291,13 @@ STATIC const int init_card()
         bool reached_idle_state = false;
         for (int i = 0; i < 5; i++)
         {
-            mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
-            if (cmd(0, 0, NULL, 0, true, true) == R1_IDLE_STATE) // go to SPI mode
+            //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+            if (cmd(0, 0, NULL, 0, true, false) == R1_IDLE_STATE) // go to SPI mode
             {
                 reached_idle_state = true;
                 break;
             }
-            clock_card(1);
+            //clock_card(1);
         }
         if (!reached_idle_state)
         {
@@ -304,10 +310,10 @@ STATIC const int init_card()
     // CMD8: determine card version
     {
         uint8_t rb7[4];
-        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
-        int response = cmd(8, 0x1AA, rb7, sizeof(rb7), false, true);
-        clock_card(1);
-        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+        //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+        int response = cmd(8, 0x1AA, rb7, sizeof(rb7), false, false);
+        //clock_card(1);
+        //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response == R1_IDLE_STATE)
         {
             const int result = init_card_v2();
@@ -335,9 +341,9 @@ STATIC const int init_card()
     // CMD9: get number of sectors
     {
         uint8_t csd[16];
-        int response = cmd(9, 0, csd, sizeof(csd), true, true);
-        clock_card(1);
-        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+        int response = cmd(9, 0, csd, sizeof(csd), true, false);
+        //clock_card(1);
+        //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response != 0)
         {
             //    return translate("no response from SD card");
@@ -367,9 +373,9 @@ STATIC const int init_card()
 
 //     CMD16: set block length to 512 bytes
     {
-        int response = cmd(16, 512, NULL, 0, true, true);
-        clock_card(1);
-        mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+        int response = cmd(16, 512, NULL, 0, true, false);
+        //clock_card(1);
+        //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response != 0)
         {
             // return translate("can't set 512 block size");
@@ -402,7 +408,7 @@ void sd_spi_construct() // int baudrate
 
     //    lock_bus_or_throw(self);
     mp_hal_pin_output(MICROPY_HW_SD_SPI_CSN);
-    mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
+    mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
 
 	#if defined(MICROPY_HW_SD_SPI_CD)
     mp_hal_pin_input(MICROPY_HW_SD_SPI_CD);
@@ -655,7 +661,7 @@ STATIC mp_obj_t sd_spi_read(mp_obj_t self, mp_obj_t block_num) {
 
     if (ret != 0) {
         m_del(uint8_t, dest, SDCARD_BLOCK_SIZE);
-        mp_raise_msg_varg(&mp_type_Exception, MP_ERROR_TEXT("sdcard_read_blocks failed [%u]"), ret);
+        mp_raise_msg_varg(&mp_type_Exception, MP_ERROR_TEXT("sd_spi_read failed [%u]"), ret);
     }
 
     return mp_obj_new_bytearray_by_ref(SDCARD_BLOCK_SIZE, dest);
@@ -672,7 +678,7 @@ STATIC mp_obj_t sd_spi_write(mp_obj_t self, mp_obj_t block_num, mp_obj_t data) {
     mp_uint_t ret = sd_spi_writeblocks(bufinfo.buf, mp_obj_get_int(block_num), bufinfo.len / SDCARD_BLOCK_SIZE);
 
     if (ret != 0) {
-        mp_raise_msg_varg(&mp_type_Exception, MP_ERROR_TEXT("sdcard_write_blocks failed [%u]"), ret);
+        mp_raise_msg_varg(&mp_type_Exception, MP_ERROR_TEXT("sd_spi_write failed [%u]"), ret);
     }
 
     return mp_const_none;
@@ -757,13 +763,13 @@ void sd_spi_init_vfs(fs_user_mount_t *vfs, int part) {
     vfs->fatfs.part = part;
     #endif
     vfs->blockdev.readblocks[0] = MP_OBJ_FROM_PTR(&pyb_sd_spi_readblocks_obj);
-    vfs->blockdev.readblocks[1] = MP_OBJ_FROM_PTR(&pyb_sd_spi_type);
+    vfs->blockdev.readblocks[1] = MP_OBJ_FROM_PTR(&pyb_sd_spi_obj);
     vfs->blockdev.readblocks[2] = MP_OBJ_FROM_PTR(sd_spi_readblocks); // native version
     vfs->blockdev.writeblocks[0] = MP_OBJ_FROM_PTR(&pyb_sd_spi_writeblocks_obj);
-    vfs->blockdev.writeblocks[1] = MP_OBJ_FROM_PTR(&pyb_sd_spi_type);
+    vfs->blockdev.writeblocks[1] = MP_OBJ_FROM_PTR(&pyb_sd_spi_obj);
     vfs->blockdev.writeblocks[2] = MP_OBJ_FROM_PTR(sd_spi_writeblocks); // native version
     vfs->blockdev.u.ioctl[0] = MP_OBJ_FROM_PTR(&pyb_sd_spi_ioctl_obj);
-    vfs->blockdev.u.ioctl[1] = MP_OBJ_FROM_PTR(&pyb_sd_spi_type);
+    vfs->blockdev.u.ioctl[1] = MP_OBJ_FROM_PTR(&pyb_sd_spi_obj);
 }
 
 #endif

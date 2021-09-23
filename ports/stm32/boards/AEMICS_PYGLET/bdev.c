@@ -83,7 +83,7 @@ const uint32_t optionbytes6n  __attribute__(( section(".optionbytes6n") )) = ~op
 const uint32_t optionbytes7  __attribute__(( section(".optionbytes7") )) = 0xFFFFFFFF;
 const uint32_t optionbytes7n  __attribute__(( section(".optionbytes7n") )) = ~optionbytes7;
 //PCROP2 End address, @ 0x1FFF F810
-const uint32_t optionbytes8  __attribute__(( section(".optionbytes8") )) = 0xFFFFFFFF;
+const uint32_t optionbytes8  __attribute__(( section(".optionbytes8") )) = 0x00FF0000;
 const uint32_t optionbytes8n  __attribute__(( section(".optionbytes8n") )) = ~optionbytes8;
 //WRP1 Area B address, @ 0x1FFF F818
 const uint32_t optionbytes9  __attribute__(( section(".optionbytes9") )) = 0xFF00FFFF;

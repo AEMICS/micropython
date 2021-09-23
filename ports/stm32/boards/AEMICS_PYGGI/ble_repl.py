@@ -122,7 +122,7 @@ class BLEUART:
         # Optionally add services=[_UART_UUID], but this is likely to make the payload too large.
         self._payload = advertising_payload(name=name, appearance=_ADV_APPEARANCE_GENERIC_UNKNOWN)
         self._advertise()
-        #self.lf = LedFade()
+        # self.lf = LedFade()
 
     def irq(self, handler):
         self._handler = handler
@@ -132,14 +132,14 @@ class BLEUART:
         if event == _IRQ_CENTRAL_CONNECT:
             conn_handle, _, _ = data
             self._connections.add(conn_handle)
-            #self.lf.start()
+            # self.lf.start()
         elif event == _IRQ_CENTRAL_DISCONNECT:
             conn_handle, _, _ = data
             if conn_handle in self._connections:
                 self._connections.remove(conn_handle)
             # Start advertising again to allow a new connection.
             self._advertise()
-            #self.lf.stop()
+            # self.lf.stop()
         elif event == _IRQ_GATTS_WRITE:
             conn_handle, value_handle = data
             if conn_handle in self._connections and value_handle == self._rx_handle:
@@ -168,6 +168,7 @@ class BLEUART:
 
     def _advertise(self, interval_us=500000):
         self._ble.gap_advertise(interval_us, adv_data=self._payload)
+
 
 _MP_STREAM_POLL = const(3)
 _MP_STREAM_POLL_RD = const(0x0001)

@@ -15,10 +15,12 @@ LM75_ADDR = const(0x48)
 # BQ24160_addr 7bit I2C address
 BQ24160_ADDR = const(0x6B)
 
+
 class LM75Exception(Exception):
     pass
 
-class LM75():
+
+class LM75:
     # registers
     TEMP_REGISTER = const(0)
     CONF_REGISTER = const(1)
@@ -26,7 +28,7 @@ class LM75():
     THYST_REGISTER = const(2)
     TOS_REGISTER = const(3)
 
-    def __init__(self):                    # Check existence and wake it
+    def __init__(self):  # Check existence and wake it
         self._i2c = I2C(I2C_BUS)
         devices = self._i2c.scan()
         if not LM75_ADDR in devices:
@@ -36,13 +38,11 @@ class LM75():
     # Internal single byte I2C communication
     def _read(self, reg, num=1):
         data = self._i2c.readfrom_mem(LM75_ADDR, reg, num)
-        data = int.from_bytes(data, 'big')
+        data = int.from_bytes(data, "big")
         return data
 
     def _write(self, reg, data, num=1):
-        self._i2c.writeto_mem(LM75_ADDR,
-                              reg,
-                              data.to_bytes(num, 'big'))
+        self._i2c.writeto_mem(LM75_ADDR, reg, data.to_bytes(num, "big"))
 
     def wake(self):
         self._write(self.CONF_REGISTER, 0)
@@ -60,12 +60,14 @@ class LM75():
         temperature = temp / 256
 
         # sign bit: subtract once to clear, 2nd time to add its value
-        return temperature if temperature < 128 else temperature -256
+        return temperature if temperature < 128 else temperature - 256
+
 
 class BQ24160Exception(Exception):
     pass
 
-class BQ24160():
+
+class BQ24160:
     # registers
 
     STAT_CONTR = const(0)
@@ -93,26 +95,24 @@ class BQ24160():
         self.default()
         self.timer = pyb.Timer(16, freq=0.1)
         # Can't put a 'self' in a timer callback so direct command
-        self.timer.callback(lambda t: I2C(3).writeto_mem(0x6B, 0, b'\x80'))
+        self.timer.callback(lambda t: I2C(3).writeto_mem(0x6B, 0, b"\x80"))
         self.pin_chg_dis = pyb.Pin.board.CHARGE_DISABLE
         self.pin_chg_dis.init(mode=pyb.Pin.OUT)
 
     def default(self):
-        self.write_control(0b10000000) # reset
+        self.write_control(0b10000000)  # reset
 
-        self.write_control(0b00000010) # .. disable charge
-        self.write_batt_stat(0b00000001) # .. No Batt
+        self.write_control(0b00000010)  # .. disable charge
+        self.write_batt_stat(0b00000001)  # .. No Batt
 
     # Internal single byte I2C communication
     def _read_one(self, reg):
         data = self._i2c.readfrom_mem(BQ24160_ADDR, reg, 1)
-        data = int.from_bytes(data, 'little')
+        data = int.from_bytes(data, "little")
         return data
 
     def _write_one(self, reg, data):
-        self._i2c.writeto_mem(BQ24160_ADDR,
-                              reg,
-                              data.to_bytes(1, 'little'))
+        self._i2c.writeto_mem(BQ24160_ADDR, reg, data.to_bytes(1, "little"))
 
     # Direct pin control
     def set_charge_off(self):
@@ -122,13 +122,15 @@ class BQ24160():
     def set_charge_on(self):
         self.pin_chg_dis.off()
 
-    def set_charge_voltage(self, voltage): # Set battery regulator voltage (3.5V-4.44V w/ steps of 0.02V)
+    def set_charge_voltage(
+        self, voltage
+    ):  # Set battery regulator voltage (3.5V-4.44V w/ steps of 0.02V)
         set_voltage = (voltage - 3.50) * 100
-        set_voltage_int = round(set_voltage) 
+        set_voltage_int = round(set_voltage)
         reg = set_voltage_int << 1
-        reg &= ~0x02 # Bitmask
+        reg &= ~0x02  # Bitmask
         self.write_batt_control(reg)
-        
+
     # Reading
     def read_stat_contr(self):
         return self._read_one(self.STAT_CONTR)
@@ -157,21 +159,19 @@ class BQ24160():
     # Writing
     @staticmethod
     def _mask_check(data, mask):
-        if data.__class__.__name__ != 'int':
-            raise BQ24160Exception('Data must be of type int')
+        if data.__class__.__name__ != "int":
+            raise BQ24160Exception("Data must be of type int")
 
         if data & (~mask & 0xFF):
-            raise BQ24160Exception('Data out of range for register')
+            raise BQ24160Exception("Data out of range for register")
 
     def write_stat_contr(self, data):
         self._mask_check(data, self.STAT_CONTR_w_mask)
-        self._write_one(self.STAT_CONTR,
-                        data & self.STAT_CONTR_w_mask)
+        self._write_one(self.STAT_CONTR, data & self.STAT_CONTR_w_mask)
 
     def write_batt_stat(self, data):
         self._mask_check(data, self.BATT_SUP_STAT_w_mask)
-        self._write_one(self.BATT_SUP_STAT,
-                        data & self.BATT_SUP_STAT_w_mask)
+        self._write_one(self.BATT_SUP_STAT, data & self.BATT_SUP_STAT_w_mask)
 
     def write_control(self, data):
         self._mask_check(data, 0xFF)

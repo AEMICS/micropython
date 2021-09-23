@@ -305,7 +305,7 @@ void USB_IRQHandler(void) {
 }
 #endif
 
-#elif defined(STM32WB) || defined(STM32G473xx)
+#elif defined(STM32WB) || defined(STM32G4)
 
 #if MICROPY_HW_USB_FS
 void USB_LP_IRQHandler(void) {

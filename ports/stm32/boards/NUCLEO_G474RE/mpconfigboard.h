@@ -10,19 +10,21 @@
 #define MICROPY_HW_HAS_FLASH        (0)  // QSPI extflash not mounted
 
 // ports/stm32/mpconfigport.h
-/*
+//minimize during debug
 #define MICROPY_PY_LWIP      (0)  // Geen ETH
 #define MICROPY_PY_USSL      (0)
 #define MICROPY_SSL_MBEDTLS  (0)
 #define MICROPY_PY_UASYNCIO  (0)
 #define MICROPY_PY_UZLIB     (0)
-#define MICROPY_PY_UJSON     (1)
+#define MICROPY_PY_UBINASCII (0)
+#define MICROPY_PY_UHASHLIB  (0)
+#define MICROPY_PY_UJSON     (0)
 #define MICROPY_PY_URE       (0)
 #define MICROPY_PY_FRAMEBUF  (0)
 #define MICROPY_PY_USOCKET   (0)
 #define MICROPY_PY_NETWORK   (0)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
-*/
+
 
 #define MICROPY_BOARD_EARLY_INIT    NUCLEO_G474RE_board_early_init
 void NUCLEO_G474RE_board_early_init(void);

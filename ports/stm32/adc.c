@@ -254,7 +254,11 @@ STATIC void adcx_clock_enable(ADC_HandleTypeDef *adch) {
     }
     __HAL_RCC_ADC_CLK_ENABLE();
     #elif defined(STM32G4)
-    __HAL_RCC_ADC12_CLK_ENABLE();
+    if (adch->Instance == ADC3 || adch->Instance == ADC4 || adch->Instance == ADC5) {
+        __HAL_RCC_ADC345_CLK_ENABLE();
+    } else {
+        __HAL_RCC_ADC12_CLK_ENABLE();
+    }
     #else
     #error Unsupported processor
     #endif

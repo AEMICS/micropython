@@ -1,4 +1,4 @@
-DEBUG = 0
+DEBUG = 1
 
 # MCU settings
 MCU_SERIES = g4
@@ -18,4 +18,4 @@ LD_FILES = boards/stm32g474.ld boards/common_basic.ld
 #MICROPY_PY_FRAMEBUF = 0
 #MICROPY_PY_USOCKET = 0
 #MICROPY_PY_NETWORK = 0
-#FROZEN_MANIFEST = 0
+FROZEN_MANIFEST = 0

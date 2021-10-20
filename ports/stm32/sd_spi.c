@@ -75,11 +75,11 @@ int sd_spi_ioctl(int cmd) {
 	switch (cmd) {
 		case MP_BLOCKDEV_IOCTL_INIT:
 			if (!sd_spi_card_inserted()) {
-				DEBUG_PRINT("MP_BLOCKDEV_IOCTL_INIT fail\n");
+				DEBUG_PRINT("# MP_BLOCKDEV_IOCTL_INIT fail\n");
 				return -1; // error
 
 			}
-			DEBUG_PRINT("MP_BLOCKDEV_IOCTL_INIT OK\n");
+			DEBUG_PRINT("# MP_BLOCKDEV_IOCTL_INIT OK\n");
 			return 0; // success
 
 		case MP_BLOCKDEV_IOCTL_DEINIT:
@@ -90,6 +90,7 @@ int sd_spi_ioctl(int cmd) {
 			return 0; // success
 
 		case MP_BLOCKDEV_IOCTL_BLOCK_COUNT:
+			DEBUG_PRINT("# MP_BLOCKDEV_IOCTL_BLOCK_COUNT %d\n", sectors);
 			return sd_spi_get_blockcount();
 
 		case MP_BLOCKDEV_IOCTL_BLOCK_SIZE:
@@ -166,9 +167,9 @@ STATIC void wait_for_ready()
     }
 }
 //// In Python API, defaults are response=None, data_block=True, wait=True
-STATIC int cmd(int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait)
+STATIC int cmd(int cmd, int arg, void *response_buf, size_t response_len, bool data_block, bool wait, bool release)
 {
-    DEBUG_PRINT("cmd % 3d [%02x] arg=% 11d [%08x] len=%d%s%s\n", cmd, cmd, arg, arg, response_len, data_block ? " data" : "", wait ? " wait" : "");
+    DEBUG_PRINT("# cmd % 3d [%02x] arg=% 11d [%08x] len=%d%s%s\n", cmd, cmd, arg, arg, response_len, data_block ? " data" : "", wait ? " wait" : "");
     uint8_t cmdbuf[6];
     cmdbuf[0] = cmd | 0x40;
     cmdbuf[1] = (arg >> 24) & 0xff;
@@ -231,15 +232,16 @@ STATIC int cmd(int cmd, int arg, void *response_buf, size_t response_len, bool d
 	{
 		wait_for_ready();
 	}
-	mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
+	if (release)
+		mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
 
-	DEBUG_PRINT("cmd %3d [%02x] return %d\n", cmd, cmd, cmdbuf[0]);
+	DEBUG_PRINT("# cmd %3d [%02x] return %d\n", cmd, cmd, cmdbuf[0]);
     return cmdbuf[0];
 }
 
-STATIC int block_cmd(int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait)
+STATIC int block_cmd(int cmd_, int block, void *response_buf, size_t response_len, bool data_block, bool wait, bool release)
 {
-    return cmd(cmd_, (block * cdv), response_buf, response_len, true, true);
+    return cmd(cmd_, (block * cdv), response_buf, response_len, true, true, release);
 }
 
 STATIC bool cmd_nodata(int cmd, int response) {
@@ -258,7 +260,7 @@ STATIC bool cmd_nodata(int cmd, int response) {
 
 STATIC const int init_card_v1() {
 	for (int i = 0; i < CMD_TIMEOUT; i++) {
-		if (cmd(41, 0, NULL, 0, true, true) == 0) {
+		if (cmd(41, 0, NULL, 0, true, true, true) == 0) {
 			return 0;
 		}
 	}
@@ -269,12 +271,12 @@ STATIC const int init_card_v2() {
 	for (int i = 0; i < CMD_TIMEOUT; i++) {
 		uint8_t ocr[4];
 		mp_hal_delay_ms(50);
-		cmd(58, 0, ocr, sizeof(ocr), false, false);
-		cmd(55, 0, NULL, 0, true, false);
-		if (cmd(41, 0x40000000, NULL, 0, true, true) == 0) {
-			cmd(58, 0, ocr, sizeof(ocr), false, false);
+		cmd(58, 0, ocr, sizeof(ocr), false, false, true);
+		cmd(55, 0, NULL, 0, true, false, true);
+		if (cmd(41, 0x40000000, NULL, 0, true, true, true) == 0) {
+			cmd(58, 0, ocr, sizeof(ocr), false, false, true);
 			if ((ocr[0] & 0x40) != 0) {
-				cdv = 1;
+				cdv = 1; // indicates High capacity card
 			}
 			return 0;
 		}
@@ -292,7 +294,7 @@ STATIC const int init_card()
         for (int i = 0; i < 5; i++)
         {
             //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
-            if (cmd(0, 0, NULL, 0, true, false) == R1_IDLE_STATE) // go to SPI mode
+            if (cmd(0, 0, NULL, 0, true, false, true) == R1_IDLE_STATE) // go to SPI mode
             {
                 reached_idle_state = true;
                 break;
@@ -311,7 +313,7 @@ STATIC const int init_card()
     {
         uint8_t rb7[4];
         //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
-        int response = cmd(8, 0x1AA, rb7, sizeof(rb7), false, false);
+        int response = cmd(8, 0x1AA, rb7, sizeof(rb7), false, false, true);
         //clock_card(1);
         //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response == R1_IDLE_STATE)
@@ -341,7 +343,7 @@ STATIC const int init_card()
     // CMD9: get number of sectors
     {
         uint8_t csd[16];
-        int response = cmd(9, 0, csd, sizeof(csd), true, false);
+        int response = cmd(9, 0, csd, sizeof(csd), true, false, true);
         //clock_card(1);
         //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response != 0)
@@ -373,7 +375,7 @@ STATIC const int init_card()
 
 //     CMD16: set block length to 512 bytes
     {
-        int response = cmd(16, 512, NULL, 0, true, false);
+        int response = cmd(16, 512, NULL, 0, true, false, true);
         //clock_card(1);
         //mp_hal_pin_low(MICROPY_HW_SD_SPI_CSN);
         if (response != 0)
@@ -388,37 +390,44 @@ STATIC const int init_card()
 
 void sd_spi_construct() // int baudrate
 {
-    cdv = 512;
-    sectors = 0;
-//    self->baudrate = 250000;
-    /*!< SPI configuration */
-    SPI_InitTypeDef *init = &spi->spi->Init;
-    init->Mode = SPI_MODE_MASTER;
-    init->Direction = SPI_DIRECTION_2LINES;
-    init->DataSize = SPI_DATASIZE_8BIT;
-    init->CLKPolarity = SPI_POLARITY_LOW; // clock is low when idle
-    init->CLKPhase = SPI_PHASE_1EDGE;     // data latched on first edge, which is rising edge for low-idle
-    init->NSS = SPI_NSS_SOFT;
-    init->BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128; //SPI_BAUDRATEPRESCALER_2; // clock freq = f_PCLK / this_prescale_value; Wiz820i can do up to 80MHz
-    init->FirstBit = SPI_FIRSTBIT_MSB;
-    init->TIMode = SPI_TIMODE_DISABLED;
-    init->CRCCalculation = SPI_CRCCALCULATION_DISABLED;
-    init->CRCPolynomial = 7; // unused
-    spi_init(spi, false);
-
-    //    lock_bus_or_throw(self);
-    mp_hal_pin_output(MICROPY_HW_SD_SPI_CSN);
-    mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
-
 	#if defined(MICROPY_HW_SD_SPI_CD)
     mp_hal_pin_input(MICROPY_HW_SD_SPI_CD);
 	#endif
-    const int result = init_card();
-    extraclock_and_unlock_bus();
+    if (sd_spi_card_inserted()){
+		cdv = 512;
+		sectors = 0;
+	//    self->baudrate = 250000;
+		/*!< SPI configuration */
+		SPI_InitTypeDef *init = &spi->spi->Init;
+		init->Mode = SPI_MODE_MASTER;
+		init->Direction = SPI_DIRECTION_2LINES;
+		init->DataSize = SPI_DATASIZE_8BIT;
+		init->CLKPolarity = SPI_POLARITY_LOW; // clock is low when idle
+		init->CLKPhase = SPI_PHASE_1EDGE;     // data latched on first edge, which is rising edge for low-idle
+		init->NSS = SPI_NSS_SOFT;
+		init->BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;  // WB: 64M / 128 = 500kHz // clock freq = f_PCLK / this_prescale_value;
+		init->FirstBit = SPI_FIRSTBIT_MSB;
+		init->TIMode = SPI_TIMODE_DISABLED;
+		init->CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+		init->CRCPolynomial = 7; // unused
+		spi_init(spi, false);
 
-    if (result != 0)
-    {
-        mp_raise_msg(&mp_type_OSError, NULL);
+		//    lock_bus_or_throw(self);
+		mp_hal_pin_output(MICROPY_HW_SD_SPI_CSN);
+		mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
+
+		const int result = init_card();
+		extraclock_and_unlock_bus();
+
+		if (result != 0)
+		{
+			mp_raise_msg(&mp_type_OSError, NULL);
+		}
+		else
+		{
+			init->BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 64M / 4 -> 16M (spec: max 25M for SD)
+			spi_init(spi, false); // init is over, speed up!
+		}
     }
 }
 //
@@ -478,12 +487,12 @@ int readblocks(uint8_t *dest, uint32_t start_block, uint32_t num_blocks)
     if (num_blocks == 1)
     {
         //  Use CMD17 to read a single block
-        return block_cmd(17, start_block, dest, num_blocks * SDCARD_BLOCK_SIZE, true, true);
+        return block_cmd(17, start_block, dest, num_blocks * SDCARD_BLOCK_SIZE, true, true, true);
     }
     else
     {
         //  Use CMD18 to read multiple blocks
-        int r = block_cmd(18, start_block, NULL, 0, true, true);
+        int r = block_cmd(18, start_block, NULL, 0, true, true, false);
         if (r < 0)
         {
             return r;
@@ -500,8 +509,11 @@ int readblocks(uint8_t *dest, uint32_t start_block, uint32_t num_blocks)
             ptr += SDCARD_BLOCK_SIZE;
         }
 
+        wait_for_ready();
+        mp_hal_pin_high(MICROPY_HW_SD_SPI_CSN);
+
         // End the multi-block read
-        r = cmd(12, 0, NULL, 0, true, false);
+        r = cmd(12, 0, NULL, 0, true, false, true);
 
         // Return first status 0 or last before card ready (0xff)
         while (r != 0)
@@ -514,11 +526,13 @@ int readblocks(uint8_t *dest, uint32_t start_block, uint32_t num_blocks)
             }
             r = single_byte;
         }
+
     }
     return 0;
 }
 
 int sd_spi_readblocks(uint8_t *dest, uint32_t start_block, uint32_t num_blocks) {
+	DEBUG_PRINT("# RD blk=%d [%d]\n", start_block, num_blocks);
     sd_spi_check_for_deinit();
 
     //    lock_and_configure_bus(self);
@@ -554,7 +568,7 @@ STATIC int _write(uint8_t token, const void *buf, size_t size) {
     // In practice, I was seeing cmd[0] as 0xe5, indicating success
     for (int i = 0; i < CMD_TIMEOUT; i++) {
         spi_read(cmd, 1, 0xff);
-        DEBUG_PRINT("i=%02d cmd[0] = 0x%02x\n", i, cmd[0]);
+        DEBUG_PRINT("# i=%02d cmd[0] = 0x%02x\n", i, cmd[0]);
         if ((cmd[0] & 0b00010001) == 0b00000001) {
             if ((cmd[0] & 0x1f) != 0x5) {
                 return -EIO;
@@ -574,10 +588,11 @@ STATIC int _write(uint8_t token, const void *buf, size_t size) {
 }
 
 STATIC int writeblocks(uint8_t *src, uint32_t start_block, uint32_t num_blocks) {
+	DEBUG_PRINT("# WR blk=%d [%d]\n", start_block, num_blocks);
     sd_spi_check_for_deinit();
     if (num_blocks == 1) {
         //  Use CMD24 to write a single block
-        int r = block_cmd(24, start_block, NULL, 0, true, true);
+        int r = block_cmd(24, start_block, NULL, 0, true, true, true);
         if (r < 0) {
             return r;
         }
@@ -587,7 +602,7 @@ STATIC int writeblocks(uint8_t *src, uint32_t start_block, uint32_t num_blocks) 
         }
     } else {
         //  Use CMD25 to write multiple block
-        int r = block_cmd(25, start_block, NULL, 0, true, true);
+        int r = block_cmd(25, start_block, NULL, 0, true, true, true);
         if (r < 0) {
             return r;
         }
@@ -638,15 +653,6 @@ const mp_obj_base_t pyb_sd_spi_obj = {&pyb_sd_spi_type};
 STATIC mp_obj_t pyb_sd_spi_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     sd_spi_construct();
 
-    /*sd_spi_obj_t *self = m_new_obj(sd_spi_obj_t);
-    //self->base.type = &pyb_sd_spi_type;
-    self->bus = spi;
-    //self->cs = MICROPY_HW_SD_SPI_CSN;
-#if defined(MICROPY_HW_SD_SPI_CD)
-    //self->cd = MICROPY_HW_SD_SPI_CD;
-#endif
-    self->cdv = cdv;
-	*/
     return MP_OBJ_FROM_PTR(&pyb_sd_spi_obj);
 }
 
@@ -721,6 +727,21 @@ STATIC mp_obj_t pyb_sd_spi_writeblocks(mp_obj_t self_in, mp_obj_t start_block_in
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_writeblocks_obj, pyb_sd_spi_writeblocks);
 
+STATIC mp_obj_t pyb_sd_spi_info(mp_obj_t self) {
+    uint32_t card_type = cdv; //sdmmc_handle.sd.SdCard.CardType;
+    uint32_t log_block_nbr = sectors; //sdmmc_handle.sd.SdCard.LogBlockNbr;
+    uint32_t log_block_size = SDCARD_BLOCK_SIZE; //sdmmc_handle.sd.SdCard.LogBlockSize;
+    // cardinfo.SD_csd and cardinfo.SD_cid have lots of info but we don't use them
+    mp_obj_t tuple[3] = {
+        mp_obj_new_int_from_ull((uint64_t)log_block_nbr * (uint64_t)log_block_size),
+        mp_obj_new_int_from_uint(log_block_size),
+        mp_obj_new_int(card_type),
+    };
+    return mp_obj_new_tuple(3, tuple);
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pyb_sd_spi_info_obj, pyb_sd_spi_info);
+
 STATIC mp_obj_t pyb_sd_spi_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
 	mp_int_t cmd = mp_obj_get_int(cmd_in);
 	return MP_OBJ_NEW_SMALL_INT(sd_spi_ioctl(cmd));
@@ -729,6 +750,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(pyb_sd_spi_ioctl_obj, pyb_sd_spi_ioctl);
 
 STATIC const mp_rom_map_elem_t pyb_sd_spi_locals_dict_table[] = {
      { MP_ROM_QSTR(MP_QSTR_present), MP_ROM_PTR(&pyb_sd_spi_present_obj) },
+	 { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pyb_sd_spi_info_obj) },
 	 { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&pyb_sd_spi_read_obj) },
 	 { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&pyb_sd_spi_write_obj) },
 

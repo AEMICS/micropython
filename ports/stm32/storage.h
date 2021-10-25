@@ -74,7 +74,7 @@ int spi_bdev_eraseblocks_raw(spi_bdev_t *bdev, uint32_t block_num, uint32_t num_
 extern const struct _mp_obj_type_t pyb_flash_type;
 extern const struct _pyb_flash_obj_t pyb_flash_obj;
 
-//extern const struct _mp_obj_type_t pyb_sd_spi_type;
+// extern const struct _mp_obj_type_t pyb_sd_spi_type;
 
 struct _fs_user_mount_t;
 void pyb_flash_init_vfs(struct _fs_user_mount_t *vfs);

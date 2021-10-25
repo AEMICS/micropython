@@ -37,11 +37,11 @@
 #include "spi.h"
 
 typedef struct {
-	//const mp_hal_pin_obj_t *cs;
-//#if defined(MICROPY_HW_SD_SPI_CD)
-	//const mp_hal_pin_obj_t *cd;
-//#endif
-	const spi_t *bus;
+    // const mp_hal_pin_obj_t *cs;
+// #if defined(MICROPY_HW_SD_SPI_CD)
+    // const mp_hal_pin_obj_t *cd;
+// #endif
+    const spi_t *bus;
     int cdv;
     int baudrate;
     uint32_t sectors;

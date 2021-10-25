@@ -45,7 +45,7 @@ $(BUILD)/%.o: %.S
 
 vpath %.s . $(TOP) $(USER_C_MODULES)
 $(BUILD)/%.o: %.s
-	$(ECHO) "AS $<"
+	$(ECHO) "AS $< ($(Q)$(AS) -o $@ $<)"
 ifeq ($(DEBUG), 1)
 	$(Q)$(AS) -g -o $@ $<
 else

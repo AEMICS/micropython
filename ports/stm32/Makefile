@@ -349,6 +349,7 @@ SRC_C += \
 	servo.c \
 	dac.c \
 	adc.c \
+	sd_spi.c \
 	$(wildcard $(BOARD_DIR)/*.c)
 
 SRC_CXX += \

@@ -77,6 +77,7 @@
 #include "rtc.h"
 #include "storage.h"
 #include "sdcard.h"
+#include "sd_spi.h"
 #include "sdram.h"
 #include "rng.h"
 #include "accel.h"
@@ -241,8 +242,11 @@ STATIC bool init_sdcard_fs(void) {
             break;
         }
         vfs_fat->blockdev.flags = MP_BLOCKDEV_FLAG_FREE_OBJ;
+        #if MICROPY_HW_ENABLE_SDCARD
         sdcard_init_vfs(vfs_fat, part_num);
-
+        #elif MICROPY_HW_ENABLE_SD_SPI
+        sd_spi_init_vfs(vfs_fat, part_num);
+        #endif
         // try to mount the partition
         FRESULT res = f_mount(&vfs_fat->fatfs);
 
@@ -279,13 +283,21 @@ STATIC bool init_sdcard_fs(void) {
             #if MICROPY_HW_ENABLE_USB
             if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_NONE) {
                 // if no USB MSC medium is selected then use the SD card
+                #if MICROPY_HW_ENABLE_SDCARD
                 pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SDCARD;
+                #elif MICROPY_HW_ENABLE_SD_SPI
+                pyb_usb_storage_medium = PYB_USB_STORAGE_MEDIUM_SPI_SD;
+                #endif
             }
             #endif
 
             #if MICROPY_HW_ENABLE_USB
+            #if MICROPY_HW_ENABLE_SDCARD
             // only use SD card as current directory if that's what the USB medium is
             if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SDCARD)
+            #elif MICROPY_HW_ENABLE_SD_SPI
+            if (pyb_usb_storage_medium == PYB_USB_STORAGE_MEDIUM_SPI_SD)
+            #endif
             #endif
             {
                 if (first_part) {
@@ -427,6 +439,9 @@ void stm32_main(uint32_t reset_mode) {
     #if MICROPY_HW_ENABLE_SDCARD
     sdcard_init();
     #endif
+    #if MICROPY_HW_ENABLE_SD_SPI
+    sd_spi_construct();
+    #endif
     #if MICROPY_HW_ENABLE_STORAGE
     storage_init();
     #endif
@@ -541,7 +556,12 @@ soft_reset:
     bool mounted_sdcard = false;
     #if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
     // if an SD card is present then mount it on /sd/
-    if (sdcard_is_present()) {
+    #if MICROPY_HW_ENABLE_SDCARD
+    if (sdcard_is_present())
+    #elif MICROPY_HW_ENABLE_SD_SPI
+    if (sd_spi_card_inserted())
+    #endif
+    {
         // if there is a file in the flash called "SKIPSD", then we don't mount the SD card
         if (!mounted_flash || mp_vfs_import_stat("SKIPSD") == MP_IMPORT_STAT_NO_EXIST) {
             mounted_sdcard = init_sdcard_fs();

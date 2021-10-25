@@ -29,21 +29,26 @@
 #include "usbd_cdc_msc_hid.h"
 #include "usbd_msc_interface.h"
 
+#include "extmod/machine_spi.h"
 #include "extmod/vfs.h"
 #include "storage.h"
 #include "sdcard.h"
+#include "sd_spi.h"
+#include "spi.h"
+#include "pin.h"
 
 #if MICROPY_HW_USB_MSC
 
 // This flag is needed to support removal of the medium, so that the USB drive
 // can be unmounted and won't be remounted automatically.
 #define FLAGS_STARTED (0x01)
-
 #define FLAGS_READONLY (0x02)
 
 STATIC const void *usbd_msc_lu_data[USBD_MSC_MAX_LUN];
 STATIC uint8_t usbd_msc_lu_num;
 STATIC uint16_t usbd_msc_lu_flags;
+
+bool sd_is_init = false;
 
 static inline void lu_flag_set(uint8_t lun, uint8_t flag) {
     usbd_msc_lu_flags |= flag << (lun * 2);
@@ -162,7 +167,30 @@ STATIC int lu_ioctl(uint8_t lun, int op, uint32_t *data) {
                 return -1;
         }
     #endif
-    } else {
+    }
+    #if MICROPY_HW_ENABLE_SD_SPI
+    else if (lu == &pyb_sd_spi_type) {
+        switch (op) {
+            case MP_BLOCKDEV_IOCTL_INIT:
+                if (sd_spi_ioctl(MP_BLOCKDEV_IOCTL_INIT) != 0) {
+                    return -1;
+                }
+                *data = 0;
+                return 0;
+            case MP_BLOCKDEV_IOCTL_SYNC:
+                return sd_spi_ioctl(MP_BLOCKDEV_IOCTL_SYNC);
+            case MP_BLOCKDEV_IOCTL_BLOCK_SIZE:
+                *data = sd_spi_ioctl(MP_BLOCKDEV_IOCTL_BLOCK_SIZE);
+                return 0;
+            case MP_BLOCKDEV_IOCTL_BLOCK_COUNT:
+                *data = sd_spi_ioctl(MP_BLOCKDEV_IOCTL_BLOCK_COUNT); // TBD
+                return 0;
+            default:
+                return -1;
+        }
+    }
+    #endif
+    else {
         return -1;
     }
 }
@@ -214,13 +242,18 @@ STATIC int usbd_msc_Inquiry(uint8_t lun, const uint8_t *params, uint8_t *data_ou
     int len = MIN(sizeof(usbd_msc_inquiry_data), alloc_len);
     memcpy(data_out, usbd_msc_inquiry_data, len);
 
-    #if MICROPY_HW_ENABLE_SDCARD
+    #if MICROPY_HW_ENABLE_SDCARD || MICROPY_HW_ENABLE_SD_SPI
     const void *lu = usbd_msc_lu_data[lun];
     if (len == sizeof(usbd_msc_inquiry_data)) {
+        #if MICROPY_HW_ENABLE_SDCARD
         if (lu == &pyb_sdcard_type) {
             memcpy(data_out + 24, "SDCard", sizeof("SDCard") - 1);
         }
-        #if MICROPY_HW_ENABLE_MMCARD
+        #elif MICROPY_HW_ENABLE_SD_SPI
+        if (lu == &pyb_sd_spi_type) {
+            memcpy(data_out + 24, "SD_SPI", sizeof("SD_SPI") - 1);
+        }
+        #elif MICROPY_HW_ENABLE_MMCARD
         else if (lu == &pyb_mmcard_type) {
             memcpy(data_out + 24, "MMCard", sizeof("MMCard") - 1);
         }
@@ -288,17 +321,24 @@ STATIC int8_t usbd_msc_Read(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16
     if (lu == &pyb_flash_type) {
         storage_read_blocks(buf, blk_addr, blk_len);
         return 0;
+    }
     #if MICROPY_HW_ENABLE_SDCARD
-    } else if (lu == &pyb_sdcard_type
-               #if MICROPY_HW_ENABLE_MMCARD
-               || lu == &pyb_mmcard_type
-               #endif
-               ) {
+    else if (lu == &pyb_sdcard_type
+             #if MICROPY_HW_ENABLE_MMCARD
+             || lu == &pyb_mmcard_type
+             #endif
+             ) {
         if (sdcard_read_blocks(buf, blk_addr, blk_len) == 0) {
             return 0;
         }
-    #endif
     }
+    #elif MICROPY_HW_ENABLE_SD_SPI
+    else if (lu == &pyb_sd_spi_type) {
+        if (sd_spi_readblocks(buf, blk_addr, blk_len) == 0) {
+            return 0;
+        }
+    }
+    #endif
     return -1;
 }
 
@@ -312,17 +352,25 @@ STATIC int8_t usbd_msc_Write(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint1
     if (lu == &pyb_flash_type) {
         storage_write_blocks(buf, blk_addr, blk_len);
         return 0;
+    }
     #if MICROPY_HW_ENABLE_SDCARD
-    } else if (lu == &pyb_sdcard_type
-               #if MICROPY_HW_ENABLE_MMCARD
-               || lu == &pyb_mmcard_type
-               #endif
-               ) {
+    else if (lu == &pyb_sdcard_type
+             #if MICROPY_HW_ENABLE_MMCARD
+             || lu == &pyb_mmcard_type
+             #endif
+             ) {
         if (sdcard_write_blocks(buf, blk_addr, blk_len) == 0) {
             return 0;
         }
-    #endif
     }
+    #elif MICROPY_HW_ENABLE_SD_SPI
+    else if (lu == &pyb_sd_spi_type) {
+        if (sd_spi_writeblocks(buf, blk_addr, blk_len) == 0) {
+            return 0;
+        }
+    }
+    #endif
+
     return -1;
 }
 

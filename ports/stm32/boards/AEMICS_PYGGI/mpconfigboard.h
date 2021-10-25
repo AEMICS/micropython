@@ -21,6 +21,14 @@
 #define MICROPY_HW_HAS_FLASH        (1)
 #define MICROPY_HW_FLASH_FS_LABEL   "PYggi"
 #define MICROPY_HW_STM32WB_FLASH_SYNCRONISATION (1)
+#define MICROPY_HW_SPIFLASH_ENABLE_CACHE    (1)
+#define MICROPY_HW_ENABLE_STORAGE   (1)
+#define MICROPY_HW_ENABLE_SDCARD	(0)
+#define MICROPY_HW_ENABLE_SD_SPI	(2)
+#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (1)
+#define MICROPY_HW_SD_SPI_CSN     	(pin_D0)
+#define MICROPY_HW_SD_SPI_CD     	(pin_B0)
+#define MICROPY_HW_SD_SPI_CD_POL   	(0) // 0 == input low for card available
 
 // External HSE is 32MHz
 // Resulting core frequency is 64MHz:
@@ -80,6 +88,8 @@
 
 // USB config
 #define MICROPY_HW_USB_FS           (1)
+
+//debugging
 
 // Bluetooth config
 // in .mk file:

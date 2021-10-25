@@ -34,6 +34,7 @@ typedef enum {
     PYB_USB_STORAGE_MEDIUM_NONE = 0,
     PYB_USB_STORAGE_MEDIUM_FLASH,
     PYB_USB_STORAGE_MEDIUM_SDCARD,
+    PYB_USB_STORAGE_MEDIUM_SPI_SD,
 } pyb_usb_storage_medium_t;
 
 typedef enum {

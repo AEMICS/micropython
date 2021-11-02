@@ -48,8 +48,7 @@ class LM75:
     def wake(self):
         self._write(self.CONF_REGISTER, 0)
 
-    def sleep(self):
-        # put sensor in shutdown mode
+    def sleep(self):  # put sensor in shutdown mode
         self._write(self.CONF_REGISTER, 1)
 
     def write_conf(self, data):
@@ -58,7 +57,6 @@ class LM75:
     def temperature(self):
         self._read(self.TEMP_REGISTER)
         self.int_buffer2 = self.int_buffer >> 8
- 
         return self.int_buffer2 if self.int_buffer2 < 128 else self.int_buffer2 - 256
 
 

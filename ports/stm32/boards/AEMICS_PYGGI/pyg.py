@@ -30,16 +30,19 @@ class LM75:
 
     def __init__(self):  # Check existence and wake it
         self._i2c = I2C(I2C_BUS)
+        self.byte_buffer = bytearray(2)
+        self.int_buffer = int()
+        self.int_buffer2 = int()
+        
         devices = self._i2c.scan()
         if not LM75_ADDR in devices:
             raise LM75Exception("No LM75 device detected")
+        
         self.wake()
 
-    # Internal single byte I2C communication
-    def _read(self, reg, num=1):
-        data = self._i2c.readfrom_mem(LM75_ADDR, reg, num)
-        data = int.from_bytes(data, "big")
-        return data
+    def _read(self, reg):
+        self._i2c.readfrom_mem_into(LM75_ADDR, reg, self.byte_buffer)
+        self.int_buffer = int.from_bytes(self.byte_buffer, "big")
 
     def _write(self, reg, data, num=1):
         self._i2c.writeto_mem(LM75_ADDR, reg, data.to_bytes(num, "big"))
@@ -52,15 +55,13 @@ class LM75:
         self._write(self.CONF_REGISTER, 1)
 
     def write_conf(self, data):
-        self._write(self.CONF_REGISTER, data)
+        self._write(self.CONF_REGISTER, data) 
 
     def temperature(self):
-        # return temperature as integer in Celsius
-        temp = self._read(self.TEMP_REGISTER, 2)
-        temperature = temp / 256
-
-        # sign bit: subtract once to clear, 2nd time to add its value
-        return temperature if temperature < 128 else temperature - 256
+        self._read(self.TEMP_REGISTER)
+        self.int_buffer2 = self.int_buffer >> 8
+ 
+        return self.int_buffer2 if self.int_buffer2 < 128 else self.int_buffer2 - 256
 
 
 class BQ24160Exception(Exception):

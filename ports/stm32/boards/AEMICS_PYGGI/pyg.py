@@ -33,11 +33,9 @@ class LM75:
         self.byte_buffer = bytearray(2)
         self.int_buffer = int()
         self.int_buffer2 = int()
-        
         devices = self._i2c.scan()
         if not LM75_ADDR in devices:
             raise LM75Exception("No LM75 device detected")
-        
         self.wake()
 
     def _read(self, reg):

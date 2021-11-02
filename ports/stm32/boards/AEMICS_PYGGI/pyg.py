@@ -52,7 +52,7 @@ class LM75:
         self._write(self.CONF_REGISTER, 1)
 
     def write_conf(self, data):
-        self._write(self.CONF_REGISTER, data) 
+        self._write(self.CONF_REGISTER, data)
 
     def temperature(self):
         self._read(self.TEMP_REGISTER)

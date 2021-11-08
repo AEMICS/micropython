@@ -127,7 +127,7 @@ class BQ24160:
         reg = set_voltage_int << 1
         reg &= ~0x02  # Bitmask
         self.write_batt_control(reg)
-        
+
     def status(self):
         state_str = ""
 

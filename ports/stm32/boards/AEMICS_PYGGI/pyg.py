@@ -128,52 +128,52 @@ class BQ24160:
         reg &= ~0x02  # Bitmask
         self.write_batt_control(reg)
         
-        def status(self):
-            state_str = ""
+    def status(self):
+        state_str = ""
 
-            state = self._read_one(self.STAT_CONTR)
+        state = self._read_one(self.STAT_CONTR)
 
-            fault = state & 0x07
+        fault = state & 0x07
 
-            state_str += "Fault: "
-            if fault == 0:
-                state_str += "Normal"
-            elif fault == 1:
-                state_str += "Thermal shutdown"
-            elif fault == 2:
-                state_str += "Battery temperature fault"
-            elif fault == 3:
-                state_str += "Watchdog timer expired"
-            elif fault == 4:
-                state_str += "Safety timer expired"
-            elif fault == 5:
-                state_str += "IN supply fault"
-            elif fault == 6:
-                state_str += "USB supply fault"
-            elif fault == 7:
-                state_str += "Battery fault"
+        state_str += "Fault: "
+        if fault == 0:
+            state_str += "Normal"
+        elif fault == 1:
+            state_str += "Thermal shutdown"
+        elif fault == 2:
+            state_str += "Battery temperature fault"
+        elif fault == 3:
+            state_str += "Watchdog timer expired"
+        elif fault == 4:
+            state_str += "Safety timer expired"
+        elif fault == 5:
+            state_str += "IN supply fault"
+        elif fault == 6:
+            state_str += "USB supply fault"
+        elif fault == 7:
+            state_str += "Battery fault"
 
-            stat = (state >> 4) & 0x07
+        stat = (state >> 4) & 0x07
 
-            state_str += ", Status: "
-            if stat == 0:
-                state_str += "No valid source detected"
-            elif stat == 1:
-                state_str += "IN ready"
-            elif stat == 2:
-                state_str += "USB ready"
-            elif stat == 3:
-                state_str += "Charging from IN"
-            elif stat == 4:
-                state_str += "Charging from USB"
-            elif stat == 5:
-                state_str += "Charge Done"
-            elif stat == 6:
-                state_str += "NA"
-            elif stat == 7:
-                state_str += "Fault"
+        state_str += ", Status: "
+        if stat == 0:
+            state_str += "No valid source detected"
+        elif stat == 1:
+            state_str += "IN ready"
+        elif stat == 2:
+            state_str += "USB ready"
+        elif stat == 3:
+            state_str += "Charging from IN"
+        elif stat == 4:
+            state_str += "Charging from USB"
+        elif stat == 5:
+            state_str += "Charge Done"
+        elif stat == 6:
+            state_str += "NA"
+        elif stat == 7:
+            state_str += "Fault"
 
-            return state_str
+        return state_str
 
     # Reading
     def read_stat_contr(self):

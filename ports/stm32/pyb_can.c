@@ -333,6 +333,9 @@ STATIC mp_obj_t pyb_can_restart(mp_obj_t self_in) {
     can->CCCR |= FDCAN_CCCR_INIT;
     while ((can->CCCR & FDCAN_CCCR_INIT) == 0) {
     }
+    can->CCCR |= FDCAN_CCCR_CCE;
+    while ((can->CCCR & FDCAN_CCCR_CCE) == 0) {
+    }
     can->CCCR &= ~FDCAN_CCCR_INIT;
     while ((can->CCCR & FDCAN_CCCR_INIT)) {
     }
@@ -355,11 +358,12 @@ STATIC mp_obj_t pyb_can_state(mp_obj_t self_in) {
     if (self->is_enabled) {
         CAN_TypeDef *can = self->can.Instance;
         #if MICROPY_HW_ENABLE_FDCAN
-        if (can->PSR & FDCAN_PSR_BO) {
+        uint32_t psr = can->PSR;
+        if (psr & FDCAN_PSR_BO) {
             state = CAN_STATE_BUS_OFF;
-        } else if (can->PSR & FDCAN_PSR_EP) {
+        } else if (psr & FDCAN_PSR_EP) {
             state = CAN_STATE_ERROR_PASSIVE;
-        } else if (can->PSR & FDCAN_PSR_EW) {
+        } else if (psr & FDCAN_PSR_EW) {
             state = CAN_STATE_ERROR_WARNING;
         } else {
             state = CAN_STATE_ERROR_ACTIVE;

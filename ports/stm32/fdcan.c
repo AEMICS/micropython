@@ -44,6 +44,9 @@
 #define FDCAN_ELEMENT_MASK_FIDX  (0x7f000000) // Filter Index
 #define FDCAN_ELEMENT_MASK_ANMF  (0x80000000) // Accepted Non-matching Frame
 
+// also defined in <PROC>_hal_fdcan.c, but not able to declare extern and reach the variable
+static const uint8_t DLCtoBytes[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+
 bool can_init(pyb_can_obj_t *can_obj, uint32_t mode, uint32_t prescaler, uint32_t sjw, uint32_t bs1, uint32_t bs2, bool auto_restart) {
     (void)auto_restart;
 
@@ -80,7 +83,7 @@ bool can_init(pyb_can_obj_t *can_obj, uint32_t mode, uint32_t prescaler, uint32_
     #endif
 
     #if defined(STM32G4)
-    init->StdFiltersNbr = 28; // /2  ? if FDCAN2 is used ?
+    init->StdFiltersNbr = 28; // /2  ? if FDCAN2 is used !!?
     init->ExtFiltersNbr = 0; // Not used
 
     #elif defined(STM32H7)
@@ -177,18 +180,22 @@ bool can_init(pyb_can_obj_t *can_obj, uint32_t mode, uint32_t prescaler, uint32_
         default:
             return false;
     }
+    // FDCAN IT 0
+    HAL_FDCAN_ConfigInterruptLines(&can_obj->can, FDCAN_IT_GROUP_RX_FIFO0 | FDCAN_IT_GROUP_BIT_LINE_ERROR | FDCAN_IT_GROUP_PROTOCOL_ERROR, FDCAN_INTERRUPT_LINE0);
+    // FDCAN IT 1
+    HAL_FDCAN_ConfigInterruptLines(&can_obj->can, FDCAN_IT_GROUP_RX_FIFO1, FDCAN_INTERRUPT_LINE1);
+
     uint32_t ActiveITs = FDCAN_IT_BUS_OFF | FDCAN_IT_ERROR_WARNING | FDCAN_IT_ERROR_PASSIVE;
     ActiveITs |= FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_RX_FIFO1_NEW_MESSAGE;
     ActiveITs |= FDCAN_IT_RX_FIFO0_MESSAGE_LOST | FDCAN_IT_RX_FIFO1_MESSAGE_LOST;
     ActiveITs |= FDCAN_IT_RX_FIFO0_FULL | FDCAN_IT_RX_FIFO1_FULL;
     HAL_FDCAN_ActivateNotification(&can_obj->can, ActiveITs, 0);
-    /*__HAL_FDCAN_ENABLE_IT(&can_obj->can, FDCAN_IT_BUS_OFF | FDCAN_IT_ERROR_WARNING | FDCAN_IT_ERROR_PASSIVE);
-     __HAL_FDCAN_ENABLE_IT(&can_obj->can, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_RX_FIFO1_NEW_MESSAGE);
-     __HAL_FDCAN_ENABLE_IT(&can_obj->can, FDCAN_IT_RX_FIFO0_MESSAGE_LOST | FDCAN_IT_RX_FIFO1_MESSAGE_LOST);
-     __HAL_FDCAN_ENABLE_IT(&can_obj->can, FDCAN_IT_RX_FIFO0_FULL | FDCAN_IT_RX_FIFO1_FULL);
-         */
     return true;
 }
+
+#define FDCAN_RX_FIFO0_MASK (FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO0_FULL | FDCAN_FLAG_RX_FIFO0_NEW_MESSAGE)
+#define FDCAN_RX_FIFO1_MASK (FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO1_FULL | FDCAN_FLAG_RX_FIFO1_NEW_MESSAGE)
+#define FDCAN_ERROR_STATUS_MASK (FDCAN_FLAG_ERROR_PASSIVE | FDCAN_FLAG_ERROR_WARNING | FDCAN_FLAG_BUS_OFF)
 
 void can_deinit(pyb_can_obj_t *self) {
     self->is_enabled = false;
@@ -284,7 +291,7 @@ int can_receive(FDCAN_HandleTypeDef *can, int fifo, FDCAN_RxHeaderTypeDef *hdr, 
 
     // Copy data
     uint8_t *pdata = (uint8_t *)address;
-    for (uint32_t i = 0; i < 8; ++i) { // TODO use DLCtoBytes[hdr->DataLength] for length > 8
+    for (uint32_t i = 0; i < DLCtoBytes[hdr->DataLength]; ++i) {
         *data++ = *pdata++;
     }
 
@@ -294,6 +301,10 @@ int can_receive(FDCAN_HandleTypeDef *can, int fifo, FDCAN_RxHeaderTypeDef *hdr, 
     return 0; // success
 }
 
+#define FDCAN_RX_FIFO0_MASK (FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO0_FULL | FDCAN_FLAG_RX_FIFO0_NEW_MESSAGE)
+#define FDCAN_RX_FIFO1_MASK (FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO1_FULL | FDCAN_FLAG_RX_FIFO1_NEW_MESSAGE)
+#define FDCAN_ERROR_STATUS_MASK (FDCAN_FLAG_ERROR_PASSIVE | FDCAN_FLAG_ERROR_WARNING | FDCAN_FLAG_BUS_OFF)
+
 STATIC void can_rx_irq_handler(uint can_id, uint fifo_id) {
     mp_obj_t callback;
     pyb_can_obj_t *self;
@@ -302,52 +313,110 @@ STATIC void can_rx_irq_handler(uint can_id, uint fifo_id) {
 
     self = MP_STATE_PORT(pyb_can_obj_all)[can_id - 1];
 
+    CAN_TypeDef *can = self->can.Instance;
+
+    uint32_t RxFifo0ITs;
+    uint32_t RxFifo1ITs;
+    // uint32_t Errors;
+    uint32_t ErrorStatusITs;
+    uint32_t Psr;
+
+    RxFifo0ITs = can->IR & FDCAN_RX_FIFO0_MASK;
+    RxFifo0ITs &= can->IE;
+    RxFifo1ITs = can->IR & FDCAN_RX_FIFO1_MASK;
+    RxFifo1ITs &= can->IE;
+    // Errors = (&self->can)->Instance->IR & FDCAN_ERROR_MASK;
+    // Errors &= (&self->can)->Instance->IE;
+    ErrorStatusITs = can->IR & FDCAN_ERROR_STATUS_MASK;
+    ErrorStatusITs &= can->IE;
+    Psr = can->PSR;
+
     if (fifo_id == FDCAN_RX_FIFO0) {
         callback = self->rxcallback0;
         state = &self->rx_state0;
+        if (RxFifo0ITs & FDCAN_FLAG_RX_FIFO0_NEW_MESSAGE) {
+            __HAL_FDCAN_DISABLE_IT(&self->can, FDCAN_IT_RX_FIFO0_NEW_MESSAGE);
+            __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_RX_FIFO0_NEW_MESSAGE);
+            irq_reason = MP_OBJ_NEW_SMALL_INT(0);
+            *state = RX_STATE_MESSAGE_PENDING;
+
+        }
+        if (RxFifo0ITs & FDCAN_FLAG_RX_FIFO0_FULL) {
+            __HAL_FDCAN_DISABLE_IT(&self->can, FDCAN_IT_RX_FIFO0_FULL);
+            __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_RX_FIFO0_FULL);
+            irq_reason = MP_OBJ_NEW_SMALL_INT(1);
+            *state = RX_STATE_FIFO_FULL;
+
+        }
+        if (RxFifo0ITs & FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST) {
+            __HAL_FDCAN_DISABLE_IT(&self->can, FDCAN_IT_RX_FIFO0_MESSAGE_LOST);
+            __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST);
+            irq_reason = MP_OBJ_NEW_SMALL_INT(2);
+            *state = RX_STATE_FIFO_OVERFLOW;
+        }
+
     } else {
         callback = self->rxcallback1;
         state = &self->rx_state1;
-    }
-
-    switch (*state) {
-        case RX_STATE_FIFO_EMPTY:
-            __HAL_FDCAN_DISABLE_IT(&self->can,  (fifo_id == FDCAN_RX_FIFO0) ?
-                FDCAN_IT_RX_FIFO0_NEW_MESSAGE : FDCAN_IT_RX_FIFO1_NEW_MESSAGE);
+        if (RxFifo1ITs & FDCAN_FLAG_RX_FIFO1_NEW_MESSAGE) {
+            __HAL_FDCAN_DISABLE_IT(&self->can, FDCAN_IT_RX_FIFO1_NEW_MESSAGE);
+            __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_RX_FIFO1_NEW_MESSAGE);
             irq_reason = MP_OBJ_NEW_SMALL_INT(0);
             *state = RX_STATE_MESSAGE_PENDING;
-            break;
-        case RX_STATE_MESSAGE_PENDING:
-            __HAL_FDCAN_DISABLE_IT(&self->can, (fifo_id == FDCAN_RX_FIFO0) ? FDCAN_IT_RX_FIFO0_FULL : FDCAN_IT_RX_FIFO1_FULL);
-            __HAL_FDCAN_CLEAR_FLAG(&self->can, (fifo_id == FDCAN_RX_FIFO0) ? FDCAN_FLAG_RX_FIFO0_FULL : FDCAN_FLAG_RX_FIFO1_FULL);
+
+        }
+        if (RxFifo1ITs & FDCAN_FLAG_RX_FIFO1_FULL) {
+            __HAL_FDCAN_DISABLE_IT(&self->can, FDCAN_IT_RX_FIFO1_FULL);
+            __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_RX_FIFO1_FULL);
             irq_reason = MP_OBJ_NEW_SMALL_INT(1);
             *state = RX_STATE_FIFO_FULL;
-            break;
-        case RX_STATE_FIFO_FULL:
-            __HAL_FDCAN_DISABLE_IT(&self->can, (fifo_id == FDCAN_RX_FIFO0) ?
-                FDCAN_IT_RX_FIFO0_MESSAGE_LOST : FDCAN_IT_RX_FIFO1_MESSAGE_LOST);
-            __HAL_FDCAN_CLEAR_FLAG(&self->can, (fifo_id == FDCAN_RX_FIFO0) ?
-                FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST : FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST);
+
+        }
+        if (RxFifo1ITs & FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST) {
+            __HAL_FDCAN_DISABLE_IT(&self->can, FDCAN_IT_RX_FIFO1_MESSAGE_LOST);
+            __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST);
             irq_reason = MP_OBJ_NEW_SMALL_INT(2);
             *state = RX_STATE_FIFO_OVERFLOW;
-            break;
-        case RX_STATE_FIFO_OVERFLOW:
-            // This should never happen
-            break;
+        }
+    }
+
+    if (ErrorStatusITs & FDCAN_FLAG_ERROR_WARNING) {
+        __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_ERROR_WARNING);
+        if (Psr & FDCAN_PSR_EW) {
+            irq_reason = MP_OBJ_NEW_SMALL_INT(3);
+            // mp_printf(MICROPY_ERROR_PRINTER,"clear warning %08x\n", (can->IR & FDCAN_ERROR_STATUS_MASK));
+        }
+    }
+    if (ErrorStatusITs & FDCAN_FLAG_ERROR_PASSIVE) {
+        __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_ERROR_PASSIVE);
+        if (Psr & FDCAN_PSR_EP) {
+            irq_reason = MP_OBJ_NEW_SMALL_INT(4);
+            // mp_printf(MICROPY_ERROR_PRINTER,"clear passive %08x\n", (can->IR & FDCAN_ERROR_STATUS_MASK));
+        }
+    }
+    if (ErrorStatusITs & FDCAN_FLAG_BUS_OFF) {
+        __HAL_FDCAN_CLEAR_FLAG(&self->can, FDCAN_FLAG_BUS_OFF);
+        if (Psr & FDCAN_PSR_BO) {
+            irq_reason = MP_OBJ_NEW_SMALL_INT(5);
+            // mp_printf(MICROPY_ERROR_PRINTER,"bus off %08x\n", (can->IR & FDCAN_ERROR_STATUS_MASK));
+        }
     }
 
     pyb_can_handle_callback(self, fifo_id, callback, irq_reason);
+    // mp_printf(MICROPY_ERROR_PRINTER, "Ints: %08x, %08x, %08x\n", RxFifo0ITs, RxFifo1ITs, ErrorStatusITs);
 }
 
 #if defined(MICROPY_HW_CAN1_TX)
 void FDCAN1_IT0_IRQHandler(void) {
     IRQ_ENTER(FDCAN1_IT0_IRQn);
+    // mp_printf(MICROPY_ERROR_PRINTER, "Rx0: ");
     can_rx_irq_handler(PYB_CAN_1, FDCAN_RX_FIFO0);
     IRQ_EXIT(FDCAN1_IT0_IRQn);
 }
 
 void FDCAN1_IT1_IRQHandler(void) {
     IRQ_ENTER(FDCAN1_IT1_IRQn);
+    // mp_printf(MICROPY_ERROR_PRINTER, "Rx1: ");
     can_rx_irq_handler(PYB_CAN_1, FDCAN_RX_FIFO1);
     IRQ_EXIT(FDCAN1_IT1_IRQn);
 }

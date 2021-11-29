@@ -282,6 +282,7 @@ def main():
         #'CAN_FIFOMailBox',
         #'CAN_FilterRegister',
         #'CAN',
+        "FDCAN",
         "CRC",
         "DAC",
         "DBGMCU",

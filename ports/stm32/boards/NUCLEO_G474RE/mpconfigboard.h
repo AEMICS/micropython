@@ -16,7 +16,7 @@
 #define MICROPY_SSL_MBEDTLS  (0)
 #define MICROPY_PY_UASYNCIO  (0)
 #define MICROPY_PY_UZLIB     (0)
-#define MICROPY_PY_UBINASCII (0)
+#define MICROPY_PY_UBINASCII (1)
 #define MICROPY_PY_UHASHLIB  (0)
 #define MICROPY_PY_UJSON     (0)
 #define MICROPY_PY_URE       (0)
@@ -24,7 +24,7 @@
 #define MICROPY_PY_USOCKET   (0)
 #define MICROPY_PY_NETWORK   (0)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
-
+#define MICROPY_PY_SYS_EXC_INFO (1)
 
 #define MICROPY_BOARD_EARLY_INIT    NUCLEO_G474RE_board_early_init
 void NUCLEO_G474RE_board_early_init(void);

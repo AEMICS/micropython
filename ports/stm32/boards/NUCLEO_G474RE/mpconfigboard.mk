@@ -1,4 +1,4 @@
-DEBUG = 1
+DEBUG = 0
 
 # MCU settings
 MCU_SERIES = g4

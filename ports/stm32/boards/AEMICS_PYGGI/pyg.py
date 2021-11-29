@@ -30,16 +30,17 @@ class LM75:
 
     def __init__(self):  # Check existence and wake it
         self._i2c = I2C(I2C_BUS)
+        self.byte_buffer = bytearray(2)
+        self.int_buffer = int()
+        self.int_buffer2 = int()
         devices = self._i2c.scan()
         if not LM75_ADDR in devices:
             raise LM75Exception("No LM75 device detected")
         self.wake()
 
-    # Internal single byte I2C communication
-    def _read(self, reg, num=1):
-        data = self._i2c.readfrom_mem(LM75_ADDR, reg, num)
-        data = int.from_bytes(data, "big")
-        return data
+    def _read(self, reg):
+        self._i2c.readfrom_mem_into(LM75_ADDR, reg, self.byte_buffer)
+        self.int_buffer = int.from_bytes(self.byte_buffer, "big")
 
     def _write(self, reg, data, num=1):
         self._i2c.writeto_mem(LM75_ADDR, reg, data.to_bytes(num, "big"))
@@ -47,20 +48,16 @@ class LM75:
     def wake(self):
         self._write(self.CONF_REGISTER, 0)
 
-    def sleep(self):
-        # put sensor in shutdown mode
+    def sleep(self):  # put sensor in shutdown mode
         self._write(self.CONF_REGISTER, 1)
 
     def write_conf(self, data):
         self._write(self.CONF_REGISTER, data)
 
     def temperature(self):
-        # return temperature as integer in Celsius
-        temp = self._read(self.TEMP_REGISTER, 2)
-        temperature = temp / 256
-
-        # sign bit: subtract once to clear, 2nd time to add its value
-        return temperature if temperature < 128 else temperature - 256
+        self._read(self.TEMP_REGISTER)
+        self.int_buffer2 = self.int_buffer >> 8
+        return self.int_buffer2 if self.int_buffer2 < 128 else self.int_buffer2 - 256
 
 
 class BQ24160Exception(Exception):
@@ -130,6 +127,53 @@ class BQ24160:
         reg = set_voltage_int << 1
         reg &= ~0x02  # Bitmask
         self.write_batt_control(reg)
+
+    def status(self):
+        state_str = ""
+
+        state = self._read_one(self.STAT_CONTR)
+
+        fault = state & 0x07
+
+        state_str += "Fault: "
+        if fault == 0:
+            state_str += "Normal"
+        elif fault == 1:
+            state_str += "Thermal shutdown"
+        elif fault == 2:
+            state_str += "Battery temperature fault"
+        elif fault == 3:
+            state_str += "Watchdog timer expired"
+        elif fault == 4:
+            state_str += "Safety timer expired"
+        elif fault == 5:
+            state_str += "IN supply fault"
+        elif fault == 6:
+            state_str += "USB supply fault"
+        elif fault == 7:
+            state_str += "Battery fault"
+
+        stat = (state >> 4) & 0x07
+
+        state_str += ", Status: "
+        if stat == 0:
+            state_str += "No valid source detected"
+        elif stat == 1:
+            state_str += "IN ready"
+        elif stat == 2:
+            state_str += "USB ready"
+        elif stat == 3:
+            state_str += "Charging from IN"
+        elif stat == 4:
+            state_str += "Charging from USB"
+        elif stat == 5:
+            state_str += "Charge Done"
+        elif stat == 6:
+            state_str += "NA"
+        elif stat == 7:
+            state_str += "Fault"
+
+        return state_str
 
     # Reading
     def read_stat_contr(self):

@@ -111,8 +111,13 @@ enum {
 
 #define GPIO_AF5_I2S1   GPIO_AF5_SPI1
 #define GPIO_AF5_I2S2   GPIO_AF5_SPI2
+#if !defined(STM32G4)
 #define GPIO_AF5_I2S3   GPIO_AF5_I2S3ext
 #define GPIO_AF6_I2S2   GPIO_AF6_I2S2ext
+#else
+#define GPIO_AF5_I2S3   GPIO_AF5_SPI3
+#define GPIO_AF6_I2S2   GPIO_AF6_SPI2
+#endif
 #define GPIO_AF6_I2S3   GPIO_AF6_SPI3
 #define GPIO_AF7_I2S2   GPIO_AF7_SPI2
 #define GPIO_AF7_I2S3   GPIO_AF7_I2S3ext

@@ -8,6 +8,7 @@
 #define MICROPY_HW_ENABLE_USB       (0)  // A12 (dp), A11 (dm)
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (0)  // QSPI extflash not mounted
+#define MICROPY_HW_ENABLE_I2S       (1)
 
 // ports/stm32/mpconfigport.h
 //minimize during debug
@@ -86,6 +87,10 @@ void NUCLEO_G474RE_board_early_init(void);
 //#define MICROPY_HW_SPI3_SCK         (pin_) // B3, C10
 //#define MICROPY_HW_SPI3_MISO        (pin_) // B4, C11
 //#define MICROPY_HW_SPI3_MOSI        (pin_) // B5, C12
+
+// I2S buses
+//#define MICROPY_HW_I2S1     		(1)  // I2S 1 -> SPI 1
+#define MICROPY_HW_I2S2     		(1)  // I2S 2
 
 // USRSW is pulled low. Pressing the button makes the input go high.
 #define MICROPY_HW_USRSW_PIN        (pin_C13)

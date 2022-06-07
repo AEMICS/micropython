@@ -580,9 +580,10 @@ STATIC bool i2s_init(machine_i2s_obj_t *self) {
             dma_init(&self->hdma_tx, self->dma_descr_tx, DMA_MEMORY_TO_PERIPH, &self->hi2s);
             self->hi2s.hdmatx = &self->hdma_tx;
         }
-
+#if !defined(STM32G4)
+        // G4 does not include this clock source
         __HAL_RCC_PLLI2S_ENABLE();  // start I2S clock
-
+#endif
         return true;
     } else {
         return false;
@@ -791,8 +792,10 @@ STATIC void machine_i2s_init_helper(machine_i2s_obj_t *self, size_t n_pos_args, 
     init->MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
     init->AudioFreq = args[ARG_rate].u_int;
     init->CPOL = I2S_CPOL_LOW;
+#if !defined(STM32G4)
+    // G4 does not define ClockSource
     init->ClockSource = I2S_CLOCK_PLL;
-
+#endif
     // init the I2S bus
     if (!i2s_init(self)) {
         mp_raise_msg_varg(&mp_type_OSError, MP_ERROR_TEXT("I2S init failed"));

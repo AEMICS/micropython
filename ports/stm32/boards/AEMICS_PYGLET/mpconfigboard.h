@@ -11,6 +11,10 @@
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_LED          (1)
 #define MICROPY_HW_HAS_FLASH        (1)  // QSPI extflash mounted
+#define MICROPY_HW_ENABLE_I2S       (1)
+// I2S buses
+#define MICROPY_HW_I2S1             (1)
+#define MICROPY_HW_I2S2             (1)
 
 #define MICROPY_BOARD_EARLY_INIT    board_early_init
 void board_early_init(void);

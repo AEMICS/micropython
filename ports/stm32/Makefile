@@ -439,7 +439,7 @@ ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f0 f4 f7 h7 l4))
 endif
 endif
 
-ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f0 f4 f7 l0))
+ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),f0 f4 f7 l0 g4))
 HAL_SRC_C += $(addprefix $(HAL_DIR)/Src/stm32$(MCU_SERIES)xx_,\
 	hal_i2s.c \
 	)

@@ -12,9 +12,6 @@
 #define MICROPY_HW_HAS_LED          (1)
 #define MICROPY_HW_HAS_FLASH        (1)  // QSPI extflash mounted
 #define MICROPY_HW_ENABLE_I2S       (1)
-// I2S buses
-#define MICROPY_HW_I2S1             (1)
-#define MICROPY_HW_I2S2             (1)
 
 #define MICROPY_BOARD_EARLY_INIT    board_early_init
 void board_early_init(void);
@@ -62,7 +59,6 @@ void board_early_init(void);
 #define MICROPY_HW_UART4_TX         (pin_C10)
 #define MICROPY_HW_UART4_RX         (pin_C11)
 
-// xSPI
 //SPI1
 #define MICROPY_HW_SPI1_NSS         (pin_A3)
 #define MICROPY_HW_SPI1_SCK         (pin_A5)
@@ -78,6 +74,10 @@ void board_early_init(void);
 // #define MICROPY_HW_SPI3_SCK         (pin_C10)
 // #define MICROPY_HW_SPI3_MISO        (pin_C11)
 // #define MICROPY_HW_SPI3_MOSI        (pin_C12)
+
+// I2S buses
+#define MICROPY_HW_I2S2             (1)  // I2S 2 peripheral
+#define MICROPY_HW_I2S3             (1)  // I2S 3 peripheral
 
 //QSPI1
 // 8MBit external QSPI flash, used for either the filesystem or XIP memory mapped

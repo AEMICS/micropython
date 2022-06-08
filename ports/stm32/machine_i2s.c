@@ -81,7 +81,7 @@
 //   32 byte address boundary.  Not all STM32 devices have a D-Cache.  Buffer alignment
 //   will still happen on these devices to keep this code simple.
 
-#define MAX_I2S_STM32 (2)
+#define MAX_I2S_STM32 (3)
 
 // DMA ping-pong buffer size was empirically determined.  It is a tradeoff between:
 // 1. memory use (smaller buffer size desirable to reduce memory footprint)
@@ -854,6 +854,10 @@ STATIC mp_obj_t machine_i2s_make_new(const mp_obj_type_t *type, size_t n_pos_arg
     } else if (i2s_id == 2) {
         i2s_id_zero_base = 1;
     #endif
+	#ifdef MICROPY_HW_I2S3
+	} else if (i2s_id == 3) {
+		i2s_id_zero_base = 2;
+	#endif
     } else {
         mp_raise_ValueError(MP_ERROR_TEXT("invalid id"));
     }

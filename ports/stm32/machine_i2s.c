@@ -523,6 +523,7 @@ STATIC bool i2s_init(machine_i2s_obj_t *self) {
     GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
     GPIO_InitStructure.Pull = GPIO_PULLUP;
 
+#if !defined(STM32G4)
     if (self->i2s_id == 1) {
         self->hi2s.Instance = I2S1;
         __SPI1_CLK_ENABLE();
@@ -532,7 +533,9 @@ STATIC bool i2s_init(machine_i2s_obj_t *self) {
         } else {
             self->dma_descr_tx = &dma_I2S_1_TX;
         }
-    } else if (self->i2s_id == 2) {
+    } else
+#endif
+    	if (self->i2s_id == 2) {
         self->hi2s.Instance = I2S2;
         __SPI2_CLK_ENABLE();
         // configure DMA streams
@@ -541,6 +544,17 @@ STATIC bool i2s_init(machine_i2s_obj_t *self) {
         } else {
             self->dma_descr_tx = &dma_I2S_2_TX;
         }
+#if defined(STM32G4)
+    } else if (self->i2s_id == 3) {
+        self->hi2s.Instance = I2S3;
+        __SPI3_CLK_ENABLE();
+        // configure DMA streams
+        if (self->mode == I2S_MODE_MASTER_RX) {
+            self->dma_descr_rx = &dma_I2S_3_RX;
+        } else {
+            self->dma_descr_tx = &dma_I2S_3_TX;
+        }
+#endif
     } else {
         // invalid id number; should not get here as i2s object should not
         // have been created without setting a valid i2s instance number
@@ -597,11 +611,13 @@ void HAL_I2S_ErrorCallback(I2S_HandleTypeDef *hi2s) {
 }
 
 void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s) {
-    machine_i2s_obj_t *self;
+    machine_i2s_obj_t *self = 0;
     if (hi2s->Instance == I2S1) {
         self = machine_i2s_obj[0];
-    } else {
+    } else if (hi2s->Instance == I2S2) {
         self = machine_i2s_obj[1];
+    } else if (hi2s->Instance == I2S3) {
+        self = machine_i2s_obj[2];
     }
 
     // bottom half of buffer now filled,
@@ -616,11 +632,13 @@ void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef *hi2s) {
 }
 
 void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
-    machine_i2s_obj_t *self;
+    machine_i2s_obj_t *self = 0;
     if (hi2s->Instance == I2S1) {
         self = machine_i2s_obj[0];
-    } else {
+    } else if (hi2s->Instance == I2S2) {
         self = machine_i2s_obj[1];
+    } else if (hi2s->Instance == I2S3) {
+        self = machine_i2s_obj[2];
     }
 
     // top half of buffer now filled,
@@ -635,12 +653,13 @@ void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
 }
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
-    machine_i2s_obj_t *self;
-
+    machine_i2s_obj_t *self = 0;
     if (hi2s->Instance == I2S1) {
         self = machine_i2s_obj[0];
-    } else {
+    } else if (hi2s->Instance == I2S2) {
         self = machine_i2s_obj[1];
+    }  else if (hi2s->Instance == I2S3) {
+        self = machine_i2s_obj[2];
     }
 
     // for non-blocking operation, this IRQ-based callback handles
@@ -655,11 +674,13 @@ void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s) {
 }
 
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s) {
-    machine_i2s_obj_t *self;
+    machine_i2s_obj_t *self = 0;
     if (hi2s->Instance == I2S1) {
         self = machine_i2s_obj[0];
-    } else {
+    } else if (hi2s->Instance == I2S2) {
         self = machine_i2s_obj[1];
+    } else if (hi2s->Instance == I2S3) {
+        self = machine_i2s_obj[2];
     }
 
     // for non-blocking operation, this IRQ-based callback handles
@@ -907,6 +928,10 @@ STATIC mp_obj_t machine_i2s_deinit(mp_obj_t self_in) {
         __SPI2_FORCE_RESET();
         __SPI2_RELEASE_RESET();
         __SPI2_CLK_DISABLE();
+    } else if (self->hi2s.Instance == I2S3) {
+        __SPI3_FORCE_RESET();
+        __SPI3_RELEASE_RESET();
+        __SPI3_CLK_DISABLE();
     }
 
     m_free(self->ring_buffer_storage);

@@ -107,10 +107,11 @@ extern const dma_descr_t dma_SPI_1_TX;
 extern const dma_descr_t dma_SPI_2_RX;
 extern const dma_descr_t dma_SPI_2_TX;
 #if MICROPY_HW_ENABLE_I2S
-extern const dma_descr_t dma_I2S_1_RX;
-extern const dma_descr_t dma_I2S_1_TX;
+// No I2S1
 extern const dma_descr_t dma_I2S_2_RX;
 extern const dma_descr_t dma_I2S_2_TX;
+extern const dma_descr_t dma_I2S_3_RX;
+extern const dma_descr_t dma_I2S_3_TX;
 #endif
 
 extern const dma_descr_t dma_I2C_1_RX;

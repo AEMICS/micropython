@@ -91,6 +91,7 @@ void NUCLEO_G474RE_board_early_init(void);
 // I2S buses
 //#define MICROPY_HW_I2S1     		(1)  // I2S 1 -> SPI 1
 #define MICROPY_HW_I2S2     		(1)  // I2S 2
+#define MICROPY_HW_I2S3     		(1)  // I2S 3
 
 // USRSW is pulled low. Pressing the button makes the input go high.
 #define MICROPY_HW_USRSW_PIN        (pin_C13)

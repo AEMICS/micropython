@@ -535,8 +535,8 @@ const dma_descr_t dma_I2S_1_RX = { DMA1_Channel1, DMA_REQUEST_SPI1_RX, dma_id_0,
 const dma_descr_t dma_I2S_1_TX = { DMA1_Channel2, DMA_REQUEST_SPI1_TX, dma_id_1,   &dma_init_struct_i2s };
 const dma_descr_t dma_I2S_2_RX = { DMA1_Channel1, DMA_REQUEST_SPI2_RX, dma_id_0,   &dma_init_struct_i2s };
 const dma_descr_t dma_I2S_2_TX = { DMA1_Channel2, DMA_REQUEST_SPI2_TX, dma_id_1,   &dma_init_struct_i2s };
-const dma_descr_t dma_I2S_3_RX = { DMA1_Channel1, DMA_REQUEST_SPI3_RX, dma_id_0,   &dma_init_struct_i2s };
-const dma_descr_t dma_I2S_3_TX = { DMA1_Channel2, DMA_REQUEST_SPI3_TX, dma_id_1,   &dma_init_struct_i2s };
+//const dma_descr_t dma_I2S_3_RX = { DMA1_Channel1, DMA_REQUEST_SPI3_RX, dma_id_0,   &dma_init_struct_i2s };
+//const dma_descr_t dma_I2S_3_TX = { DMA1_Channel2, DMA_REQUEST_SPI3_TX, dma_id_1,   &dma_init_struct_i2s };
 #endif
 const dma_descr_t dma_UART_3_RX = { DMA1_Channel3, DMA_REQUEST_USART3_RX, dma_id_2, &dma_init_struct_spi_i2c };// ToDo: bekijken of deze init struct kan voor UART
 const dma_descr_t dma_UART_3_TX = { DMA1_Channel4, DMA_REQUEST_USART3_TX, dma_id_3, &dma_init_struct_spi_i2c };
@@ -559,7 +559,12 @@ const dma_descr_t dma_LPUART_1_RX = { DMA2_Channel3, DMA_REQUEST_LPUART1_RX, dma
 const dma_descr_t dma_LPUART_1_TX = { DMA2_Channel4, DMA_REQUEST_LPUART1_TX, dma_id_9,   &dma_init_struct_spi_i2c };
 const dma_descr_t dma_ADC_1 = { DMA2_Channel5, DMA_REQUEST_ADC1,       dma_id_10,  NULL };
 const dma_descr_t dma_MEM_2_MEM = { DMA2_Channel6, DMA_REQUEST_MEM2MEM,    dma_id_11,  NULL };
+
 #if !defined(STM32G431xx) && !defined(STM32G441xx)
+#if MICROPY_HW_ENABLE_I2S
+const dma_descr_t dma_I2S_3_RX = { DMA2_Channel7, DMA_REQUEST_SPI3_RX, dma_id_14,   &dma_init_struct_i2s };
+const dma_descr_t dma_I2S_3_TX = { DMA2_Channel8, DMA_REQUEST_SPI3_TX, dma_id_15,   &dma_init_struct_i2s };
+#endif
 // channel 7 & 8
 #endif
 

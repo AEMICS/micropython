@@ -43,6 +43,7 @@
 #include "bufhelper.h"
 #include "storage.h"
 #include "sdcard.h"
+#include "sd_spi.h"
 #include "usb.h"
 
 #if MICROPY_HW_ENABLE_USB
@@ -59,7 +60,7 @@
 #endif
 
 // Maximum number of endpoints (excluding EP0)
-#if defined(STM32L0) || defined(STM32WB)
+#if defined(STM32L0) || defined(STM32WB) || defined(STM32G4)
 #define MAX_ENDPOINT(dev_id) (7)
 #elif defined(STM32L4)
 #define MAX_ENDPOINT(dev_id) (5)
@@ -295,6 +296,11 @@ bool pyb_usb_dev_init(int dev_id, uint16_t vid, uint16_t pid, uint8_t mode, size
                 #if MICROPY_HW_ENABLE_SDCARD
                 case PYB_USB_STORAGE_MEDIUM_SDCARD:
                     msc_unit_default[0] = &pyb_sdcard_type;
+                    break;
+                #endif
+                #if MICROPY_HW_ENABLE_SD_SPI
+                case PYB_USB_STORAGE_MEDIUM_SPI_SD:
+                    msc_unit_default[0] = &pyb_sd_spi_type;
                     break;
                 #endif
                 default:
@@ -557,6 +563,9 @@ STATIC mp_obj_t pyb_usb_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
                 #endif
                 #if MICROPY_HW_ENABLE_MMCARD
                 || type == &pyb_mmcard_type
+                #endif
+                #if MICROPY_HW_ENABLE_SD_SPI
+                || type == &pyb_sd_spi_type
                 #endif
                 ) {
                 msc_unit[i] = type;

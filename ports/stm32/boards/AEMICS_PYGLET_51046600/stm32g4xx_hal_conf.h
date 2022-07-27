@@ -31,7 +31,7 @@
   *        This value is used by the RCC HAL module to compute the system frequency
   *        (when HSE is used as system clock source, directly or through the PLL).
   */
-#define HSE_VALUE    (8000000)
+#define HSE_VALUE    (8000000) 
 #define HSE_STARTUP_TIMEOUT    (100)   /*!< Time out for HSE start up, in ms */
 
 /**

@@ -72,6 +72,7 @@ CONDITIONAL_VAR = {
     "UART": "MICROPY_HW_UART{num}_TX",
     "LPUART": "MICROPY_HW_LPUART{num}_TX",
     "USART": "MICROPY_HW_UART{num}_TX",
+    "LPUART": "MICROPY_HW_LPUART{num}_TX",
     "SDMMC": "MICROPY_HW_SDMMC{num}_CK",
     "CAN": "MICROPY_HW_CAN{num}_TX",
 }

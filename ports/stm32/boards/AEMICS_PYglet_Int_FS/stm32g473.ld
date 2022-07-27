@@ -2,10 +2,13 @@
 MEMORY
 {
 RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
-FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 128K
-FLASH_QSPI (rx) : ORIGIN = 0x90000000, LENGTH = 1M     /* external QSPI flash in XIP mode */
+/* FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 512K */
+FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 352K
+/* FLASH_QSPI (rx) : ORIGIN = 0x90000000, LENGTH = 1M     /* external QSPI flash in XIP mode * /*/
+FLASH_FS (rx)   : ORIGIN = 0x08058000, LENGTH = 160K  /* starting @ 352K */
 FUSESB0 (r)     : ORIGIN = 0x1fff7800, LENGTH = 48 /* Option Bytes (configuration fuses) */
 FUSESB1 (r)     : ORIGIN = 0x1ffff808, LENGTH = 40 /* Option Bytes (configuration fuses) */
+
 }
 
 /* Generate a link error if heap and stack don't fit into RAM */
@@ -18,7 +21,7 @@ _ram_fs_cache_start = _ram_fs_cache_end - 2K; /* fs cache = 2K RAM */
 /* Define the stack.  The stack is full descending so begins just above last byte
    of RAM.  Note that EABI requires the stack to be 8-byte aligned for a call. */
 _estack = _ram_fs_cache_start - _estack_reserve;
-_sstack = _estack - 8K; /* tunable */
+_sstack = _estack - 8K; /* tunable */ 
 
 /* RAM extents for the garbage collector */
 _ram_start = ORIGIN(RAM);
@@ -27,8 +30,11 @@ _ram_end = ORIGIN(RAM) + LENGTH(RAM);
 _heap_start = _ebss; /* heap starts just after statically allocated memory */
 _heap_end = _sstack;
 
-_flash_fs_start = ORIGIN(FLASH_QSPI);
-_flash_fs_end   = ORIGIN(FLASH_QSPI) + LENGTH(FLASH_QSPI);
+/* _flash_fs_start = ORIGIN(FLASH_QSPI);
+_flash_fs_end   = ORIGIN(FLASH_QSPI) + LENGTH(FLASH_QSPI); */
+
+_flash_fs_start = ORIGIN(FLASH_FS);
+_flash_fs_end   = ORIGIN(FLASH_FS) + LENGTH(FLASH_FS);
 
 /* Memory layout for basic configuration:
 
@@ -47,16 +53,6 @@ ENTRY(Reset_Handler)
 /* define output sections */
 SECTIONS
 {
-    /* Define the code that goes in QSPI flash */
-    .text_qspi :
-    {
-        . = ALIGN(4);
-        *extmod/*(.text* .rodata*)
-        *lib/*(.text* .rodata*)
-        *py/*(.text* .rodata*)
-        . = ALIGN(4);
-    } >FLASH_QSPI
-
     /* The startup code goes first into FLASH */
     .isr_vector :
     {
@@ -78,7 +74,7 @@ SECTIONS
         . = ALIGN(4);
         _etext = .;        /* define a global symbol at end of code */
     } >FLASH
-
+	
 	fuses_bank0 :
 	{
 	. = ALIGN(4);

@@ -335,6 +335,7 @@ function ci_stm32_nucleo_build {
     # Test building a board with mboot packing enabled (encryption, signing, compression).
     make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_WB55 USE_MBOOT=1 MBOOT_ENABLE_PACKING=1
     make ${MAKEOPTS} -C ports/stm32/mboot BOARD=NUCLEO_WB55 USE_MBOOT=1 MBOOT_ENABLE_PACKING=1
+    make ${MAKEOPTS} -C ports/stm32 BOARD=NUCLEO_G474RE
     # Test mboot_pack_dfu.py created a valid file, and that its unpack-dfu command works.
     BOARD_WB55=ports/stm32/boards/NUCLEO_WB55
     BUILD_WB55=ports/stm32/build-NUCLEO_WB55
@@ -345,6 +346,14 @@ function ci_stm32_nucleo_build {
     python3 ports/stm32/mboot/mboot_pack_dfu.py -k $BOARD_WB55/mboot_keys_no_sk.h unpack-dfu $BUILD_WB55/firmware.pack.dfu $BUILD_WB55/firmware.unpack_no_sk.dfu
     diff $BUILD_WB55/firmware.unpack.dfu $BUILD_WB55/firmware.unpack_no_sk.dfu
 }
+
+function ci_aemics_stm32_build {
+    make ${MAKEOPTS} -C mpy-cross
+    make ${MAKEOPTS} -C ports/stm32 submodules
+    make ${MAKEOPTS} -C ports/stm32 BOARD=AEMICS_PYGGI
+    make ${MAKEOPTS} -C ports/stm32 BOARD=AEMICS_PYGLET
+}
+
 
 ########################################################################################
 # ports/teensy

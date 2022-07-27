@@ -140,12 +140,20 @@ static uint32_t get_bank(uint32_t addr) {
         if (addr < (FLASH_BASE + FLASH_BANK_SIZE)) {
             return FLASH_BANK_1;
         } else {
+            #if defined(FLASH_OPTR_DBANK)
             return FLASH_BANK_2;
+            #else
+            return 0;
+            #endif
         }
     } else {
         // bank swap
         if (addr < (FLASH_BASE + FLASH_BANK_SIZE)) {
+            #if defined(FLASH_OPTR_DBANK)
             return FLASH_BANK_2;
+            #else
+            return 0;
+            #endif
         } else {
             return FLASH_BANK_1;
         }
@@ -172,7 +180,6 @@ static uint32_t get_page(uint32_t addr) {
 }
 
 #elif defined(STM32G0) || defined(STM32G4)
-
 static uint32_t get_page(uint32_t addr) {
     return (addr - FLASH_BASE) / FLASH_PAGE_SIZE;
 }
@@ -273,6 +280,12 @@ int flash_erase(uint32_t flash_dest, uint32_t num_word32) {
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);
     EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
     EraseInitStruct.Page = get_page(flash_dest);
+    EraseInitStruct.NbPages = (4 * num_word32 + FLASH_PAGE_SIZE - 4) / FLASH_PAGE_SIZE;
+    #elif defined(STM32G4)
+    __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);
+    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
+    EraseInitStruct.Page = get_page(flash_dest);
+    EraseInitStruct.Banks = get_bank(flash_dest);
     EraseInitStruct.NbPages = (4 * num_word32 + FLASH_PAGE_SIZE - 4) / FLASH_PAGE_SIZE;
     #elif defined(STM32L4)
     __HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_ALL_ERRORS);

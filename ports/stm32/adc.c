@@ -132,7 +132,7 @@
 
 #endif
 
-#if defined(STM32F091xC)
+#if defined(STM32F091xC) || defined(STM32F078xx)
 #define VBAT_DIV (2)
 #elif defined(STM32F405xx) || defined(STM32F415xx) || \
     defined(STM32F407xx) || defined(STM32F417xx) || \
@@ -161,7 +161,7 @@
     defined(STM32L451xx) || defined(STM32L452xx) || \
     defined(STM32L462xx) || defined(STM32L475xx) || \
     defined(STM32L476xx) || defined(STM32L496xx) || \
-    defined(STM32WB55xx)
+    defined(STM32WB55xx) || defined(STM32G4)
 #define VBAT_DIV (3)
 #else
 #error Unsupported processor
@@ -260,6 +260,12 @@ STATIC void adcx_clock_enable(ADC_HandleTypeDef *adch) {
         __HAL_RCC_ADC_CONFIG(RCC_ADCCLKSOURCE_SYSCLK);
     }
     __HAL_RCC_ADC_CLK_ENABLE();
+    #elif defined(STM32G4)
+    if (adch->Instance == ADC3 || adch->Instance == ADC4 || adch->Instance == ADC5) {
+        __HAL_RCC_ADC345_CLK_ENABLE();
+    } else {
+        __HAL_RCC_ADC12_CLK_ENABLE();
+    }
     #else
     #error Unsupported processor
     #endif
@@ -340,6 +346,11 @@ STATIC void adc_config_channel(ADC_HandleTypeDef *adc_handle, uint32_t channel) 
     ADC_ChannelConfTypeDef sConfig;
 
     #if defined(STM32G0) || defined(STM32G4) || defined(STM32H7) || defined(STM32L4) || defined(STM32WB)
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    if (__HAL_ADC_IS_CHANNEL_INTERNAL(channel) == 0) {
+        channel = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);
+    }
+    #elif defined(STM32G4)
     sConfig.Rank = ADC_REGULAR_RANK_1;
     if (__HAL_ADC_IS_CHANNEL_INTERNAL(channel) == 0) {
         channel = __HAL_ADC_DECIMAL_NB_TO_CHANNEL(channel);

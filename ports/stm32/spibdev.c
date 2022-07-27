@@ -26,9 +26,14 @@
 
 #include "py/obj.h"
 #include "py/mperrno.h"
+#include "py/runtime.h"
+#include "spi.h"
+#include "drivers/memory/spiflash.h"
+
 #include "irq.h"
 #include "led.h"
 #include "storage.h"
+#include "pin.h"
 
 #if MICROPY_HW_ENABLE_STORAGE
 

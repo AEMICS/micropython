@@ -46,3 +46,10 @@ genrst/
 # MacOS desktop metadata files
 ######################
 .DS_Store
+
+# Eclipse project files
+######################
+.cproject
+.project
+.settings/
+*.launch

@@ -1180,7 +1180,123 @@ void DMA2_Channel7_IRQHandler(void) {
     }
     IRQ_EXIT(DMA2_Channel7_IRQn);
 }
-
+#elif defined(STM32G4)
+void DMA1_Channel1_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel1_IRQn);
+    if (dma_handle[dma_id_0] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_0]);
+    }
+    IRQ_EXIT(DMA1_Channel1_IRQn);
+}
+void DMA1_Channel2_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel2_IRQn);
+    if (dma_handle[dma_id_1] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_1]);
+    }
+    IRQ_EXIT(DMA1_Channel2_IRQn);
+}
+void DMA1_Channel3_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel3_IRQn);
+    if (dma_handle[dma_id_2] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_2]);
+    }
+    IRQ_EXIT(DMA1_Channel3_IRQn);
+}
+void DMA1_Channel4_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel4_IRQn);
+    if (dma_handle[dma_id_3] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_3]);
+    }
+    IRQ_EXIT(DMA1_Channel4_IRQn);
+}
+void DMA1_Channel5_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel5_IRQn);
+    if (dma_handle[dma_id_4] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_4]);
+    }
+    IRQ_EXIT(DMA1_Channel5_IRQn);
+}
+void DMA1_Channel6_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel6_IRQn);
+    if (dma_handle[dma_id_5] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_5]);
+    }
+    IRQ_EXIT(DMA1_Channel6_IRQn);
+}
+#if !(defined(STM32G431xx) || defined(STM32G441xx))
+void DMA1_Channel7_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel7_IRQn);
+    if (dma_handle[dma_id_12] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_12]);
+    }
+    IRQ_EXIT(DMA1_Channel7_IRQn);
+}
+void DMA1_Channel8_IRQHandler(void) {
+    IRQ_ENTER(DMA1_Channel8_IRQn);
+    if (dma_handle[dma_id_13] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_13]);
+    }
+    IRQ_EXIT(DMA1_Channel8_IRQn);
+}
+#endif
+void DMA2_Channel1_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel1_IRQn);
+    if (dma_handle[dma_id_6] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_6]);
+    }
+    IRQ_EXIT(DMA2_Channel1_IRQn);
+}
+void DMA2_Channel2_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel2_IRQn);
+    if (dma_handle[dma_id_7] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_7]);
+    }
+    IRQ_EXIT(DMA2_Channel2_IRQn);
+}
+void DMA2_Channel3_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel3_IRQn);
+    if (dma_handle[dma_id_8] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_8]);
+    }
+    IRQ_EXIT(DMA2_Channel3_IRQn);
+}
+void DMA2_Channel4_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel4_IRQn);
+    if (dma_handle[dma_id_9] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_9]);
+    }
+    IRQ_EXIT(DMA2_Channel4_IRQn);
+}
+void DMA2_Channel5_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel5_IRQn);
+    if (dma_handle[dma_id_10] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_10]);
+    }
+    IRQ_EXIT(DMA2_Channel5_IRQn);
+}
+void DMA2_Channel6_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel6_IRQn);
+    if (dma_handle[dma_id_11] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_11]);
+    }
+    IRQ_EXIT(DMA2_Channel6_IRQn);
+}
+#if !(defined(STM32G431xx) || defined(STM32G441xx))
+void DMA2_Channel7_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel7_IRQn);
+    if (dma_handle[dma_id_14] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_14]);
+    }
+    IRQ_EXIT(DMA2_Channel7_IRQn);
+}
+void DMA2_Channel8_IRQHandler(void) {
+    IRQ_ENTER(DMA2_Channel8_IRQn);
+    if (dma_handle[dma_id_15] != NULL) {
+        HAL_DMA_IRQHandler(dma_handle[dma_id_15]);
+    }
+    IRQ_EXIT(DMA2_Channel8_IRQn);
+}
+#endif
 #endif
 
 #if MICROPY_HW_DMA_ENABLE_AUTO_TURN_OFF

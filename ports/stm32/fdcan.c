@@ -230,6 +230,10 @@ bool can_init(pyb_can_obj_t *can_obj, uint32_t mode, uint32_t prescaler, uint32_
     return true;
 }
 
+#define FDCAN_RX_FIFO0_MASK (FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO0_FULL | FDCAN_FLAG_RX_FIFO0_NEW_MESSAGE)
+#define FDCAN_RX_FIFO1_MASK (FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO1_FULL | FDCAN_FLAG_RX_FIFO1_NEW_MESSAGE)
+#define FDCAN_ERROR_STATUS_MASK (FDCAN_FLAG_ERROR_PASSIVE | FDCAN_FLAG_ERROR_WARNING | FDCAN_FLAG_BUS_OFF)
+
 void can_deinit(pyb_can_obj_t *self) {
     self->is_enabled = false;
     HAL_FDCAN_DeInit(&self->can);
@@ -330,7 +334,7 @@ int can_receive(FDCAN_HandleTypeDef *can, int fifo, FDCAN_RxHeaderTypeDef *hdr, 
 
     // Copy data
     uint8_t *pdata = (uint8_t *)address;
-    for (uint32_t i = 0; i < hdr->DataLength; ++i) {
+    for (uint32_t i = 0; i < DLCtoBytes[hdr->DataLength]; ++i) {
         *data++ = *pdata++;
     }
 
@@ -339,6 +343,10 @@ int can_receive(FDCAN_HandleTypeDef *can, int fifo, FDCAN_RxHeaderTypeDef *hdr, 
 
     return 0; // success
 }
+
+#define FDCAN_RX_FIFO0_MASK (FDCAN_FLAG_RX_FIFO0_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO0_FULL | FDCAN_FLAG_RX_FIFO0_NEW_MESSAGE)
+#define FDCAN_RX_FIFO1_MASK (FDCAN_FLAG_RX_FIFO1_MESSAGE_LOST | FDCAN_FLAG_RX_FIFO1_FULL | FDCAN_FLAG_RX_FIFO1_NEW_MESSAGE)
+#define FDCAN_ERROR_STATUS_MASK (FDCAN_FLAG_ERROR_PASSIVE | FDCAN_FLAG_ERROR_WARNING | FDCAN_FLAG_BUS_OFF)
 
 STATIC void can_rx_irq_handler(uint can_id, uint fifo_id) {
     mp_obj_t callback;
@@ -444,12 +452,14 @@ STATIC void can_rx_irq_handler(uint can_id, uint fifo_id) {
 #if defined(MICROPY_HW_CAN1_TX)
 void FDCAN1_IT0_IRQHandler(void) {
     IRQ_ENTER(FDCAN1_IT0_IRQn);
+    // mp_printf(MICROPY_ERROR_PRINTER, "Rx0: ");
     can_rx_irq_handler(PYB_CAN_1, FDCAN_RX_FIFO0);
     IRQ_EXIT(FDCAN1_IT0_IRQn);
 }
 
 void FDCAN1_IT1_IRQHandler(void) {
     IRQ_ENTER(FDCAN1_IT1_IRQn);
+    // mp_printf(MICROPY_ERROR_PRINTER, "Rx1: ");
     can_rx_irq_handler(PYB_CAN_1, FDCAN_RX_FIFO1);
     IRQ_EXIT(FDCAN1_IT1_IRQn);
 }

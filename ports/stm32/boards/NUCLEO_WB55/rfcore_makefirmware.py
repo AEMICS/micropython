@@ -38,7 +38,7 @@ _OBFUSCATION_KEY = 0x0573B55AA
 
 _FIRMWARE_FILES = {
     "stm32wb5x_FUS_fw_1_0_2.bin": "fus_102.bin",
-    "stm32wb5x_FUS_fw.bin": "fus_110.bin",
+    "stm32wb5x_FUS_fw.bin": "fus_112.bin",
     "stm32wb5x_BLE_HCILayer_fw.bin": "ws_ble_hci.bin",
 }
 

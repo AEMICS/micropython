@@ -30,6 +30,7 @@
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "pin.h"
+#include "sdcard.h"
 
 const mp_obj_type_t pin_cpu_pins_obj_type = {
     { &mp_type_type },

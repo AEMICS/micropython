@@ -31,19 +31,19 @@
   *        This value is used by the RCC HAL module to compute the system frequency
   *        (when HSE is used as system clock source, directly or through the PLL).
   */
-#define HSE_VALUE    (8000000)
-#define HSE_STARTUP_TIMEOUT    (100)   /*!< Time out for HSE start up, in ms */
+#define HSE_VALUE    (24000000UL)
+#define HSE_STARTUP_TIMEOUT    (100UL)   /*!< Time out for HSE start up, in ms */
 
 /**
   * @brief External Low Speed oscillator (LSE) value.
   *        This value is used by the UART, RTC HAL module to compute the system frequency
   */
 #if !defined  (LSE_VALUE)
-#define LSE_VALUE    (32768) /*!< Value of the External oscillator in Hz*/
+#define LSE_VALUE    (32768UL) /*!< Value of the External oscillator in Hz*/
 #endif /* LSE_VALUE */
 
 #if !defined  (LSE_STARTUP_TIMEOUT)
-#define LSE_STARTUP_TIMEOUT    (5000)  /*!< Time out for LSE start up, in ms */
+#define LSE_STARTUP_TIMEOUT    (5000UL)  /*!< Time out for LSE start up, in ms */
 #endif /* LSE_STARTUP_TIMEOUT */
 
 /**
@@ -52,7 +52,7 @@
   *        frequency, this source is inserted directly through I2S_CKIN pad.
   */
 #if !defined  (EXTERNAL_CLOCK_VALUE)
-#define EXTERNAL_CLOCK_VALUE    (0) /*!< Value of the External clock source in Hz*/
+#define EXTERNAL_CLOCK_VALUE    (48000UL) /*!< Value of the External clock source in Hz*/
 #endif /* EXTERNAL_CLOCK_VALUE */
 
 #endif /* MICROPY_INCLUDED_STM32G4xx_HAL_CONF_H */

@@ -1,0 +1,13 @@
+{
+    "deploy": [
+        "../deploy.md"
+    ],
+    "docs": "",
+    "features": [],
+    "images": [],
+    "mcu": "stm32g4",
+    "product": "AEMICS Pyglet v1",
+    "thumbnail": "",
+    "url": "",
+    "vendor": "ST Microelectronics"
+}

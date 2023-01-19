@@ -1,10 +1,9 @@
 MicroPython port to ESP8266
 ===========================
 
-This is an experimental port of MicroPython for the WiFi modules based
-on Espressif ESP8266 chip.
-
-WARNING: The port is experimental and many APIs are subject to change.
+This is a port of MicroPython to the Espressif ESP8266 WiFi microcontroller.
+MicroPython runs on this chip without any underlying operating system, using
+the ESP8266 NONOS SDK.
 
 Supported features include:
 - REPL (Python prompt) over UART0.
@@ -200,19 +199,21 @@ Python prompt over WiFi, connecting through a browser.
 - GitHub repository https://github.com/micropython/webrepl.
   Please follow the instructions there.
 
-__upip__
+__mip__
 
-The ESP8266 port comes with builtin `upip` package manager, which can
-be used to install additional modules (see the main README for more
-information):
+The ESP8266 port comes with the built-in `mip` package manager, which can
+be used to install additional modules:
 
 ```
->>> import upip
->>> upip.install("micropython-pystone_lowmem")
+>>> import mip
+>>> mip.install("hmac")
 [...]
->>> import pystone_lowmem
->>> pystone_lowmem.main()
+>>> import hmac
+>>> hmac.new(b"1234567890", msg="hello world").hexdigest()
 ```
+
+See [Package management](https://docs.micropython.org/en/latest/reference/packages.html) for more
+information about `mip`.
 
 Downloading and installing packages may requite a lot of free memory,
 if you get an error, retry immediately after the hard reset.

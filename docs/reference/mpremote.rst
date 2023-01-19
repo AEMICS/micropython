@@ -19,10 +19,10 @@ The simplest way to use this tool is just by invoking it without any arguments:
 
     mpremote
 
-This command automatically detects and connects to the first available serial
-device and provides an interactive REPL.  Serial ports are opened in exclusive
-mode, so running a second (or third, etc) instance of ``mpremote`` will connect
-to subsequent serial devices, if any are available.
+This command automatically detects and connects to the first available USB
+serial device and provides an interactive REPL.  Serial ports are opened in
+exclusive mode, so running a second (or third, etc) instance of ``mpremote``
+will connect to subsequent serial devices, if any are available.
 
 
 Commands
@@ -52,7 +52,7 @@ The full list of supported commands are:
   ``<device>`` may be one of:
 
   - ``list``: list available devices
-  - ``auto``: connect to the first available device
+  - ``auto``: connect to the first available USB serial port
   - ``id:<serial>``: connect to the device with USB serial number
     ``<serial>`` (the second entry in the output from the ``connect list``
     command)
@@ -146,6 +146,14 @@ The full list of supported commands are:
   variable ``$EDITOR``). If the editor exits successfully, the updated file will
   be copied back to the device.
 
+- install packages from :term:`micropython-lib` (or GitHub) using the ``mip`` tool:
+
+  .. code-block:: bash
+
+      $ mpremote mip install <packages...>
+
+  See :ref:`packages` for more information.
+
 - mount the local directory on the remote device:
 
   .. code-block:: bash
@@ -178,8 +186,8 @@ Auto connection and soft-reset
 
 Connection and disconnection will be done automatically at the start and end of
 the execution of the tool, if such commands are not explicitly given.  Automatic
-connection will search for the first available serial device. If no action is
-specified then the REPL will be entered.
+connection will search for the first available USB serial device. If no action
+is specified then the REPL will be entered.
 
 Once connected to a device, ``mpremote`` will automatically soft-reset the
 device if needed.  This clears the Python heap and restarts the interpreter,
@@ -269,3 +277,9 @@ Examples
   mpremote cp -r dir/ :
 
   mpremote cp a.py b.py : + repl
+
+  mpremote mip install aioble
+
+  mpremote mip install github:org/repo@branch
+
+  mpremote mip install --target /flash/third-party functools

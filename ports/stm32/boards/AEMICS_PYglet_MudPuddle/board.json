@@ -1,0 +1,20 @@
+{
+    "deploy": [
+        "./deploy.md"
+    ],
+    "docs": "",
+    "features": [
+		"QSPI Flash",
+		"WiFi Nina-W102",
+		"USB-MICRO"
+	],
+    "id": "AEMICS_PYglet",
+    "images": [
+        "aemics_pyglet_1.png"
+    ],
+    "mcu": "stm32g4",
+    "product": "AEMICS PYglet on MudPuddle",
+    "thumbnail": "",
+    "url": "https://www.aemics.nl/pyg/",
+    "vendor": "AEMICS"
+}

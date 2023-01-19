@@ -38,6 +38,7 @@
 #include "modmachine.h"
 #include "extmod/machine_spi.h"
 #include "mpconfigboard.h"
+#include "spi.h"
 
 #include "nina_bsp.h"
 #include "nina_wifi_drv.h"

@@ -1,3 +1,4 @@
+
 /*
  * This file is part of the OpenMV project, https://openmv.io.
  *
@@ -120,6 +121,7 @@ int nina_ifconfig(nina_ifconfig_t *ifconfig, bool set);
 int nina_netinfo(nina_netinfo_t *netinfo);
 int nina_scan(nina_scan_callback_t scan_callback, void *arg, uint32_t timeout);
 int nina_get_rssi(void);
+int nina_set_debug(uint8_t debug);
 int nina_fw_version(uint8_t *fw_ver);
 int nina_set_hostname(const char *name);
 int nina_gethostbyname(const char *name, uint8_t *out_ip);

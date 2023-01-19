@@ -948,7 +948,10 @@ STATIC mp_obj_t pyb_can_rxcallback(mp_obj_t self_in, mp_obj_t fifo_in, mp_obj_t 
     } else if (*callback != mp_const_none) {
         // Rx call backs has already been initialized
         // only the callback function should be changed
-        *callback = callback_in;
+    	if (mp_obj_is_callable(callback_in))
+    		*callback = callback_in;
+    	else
+    		mp_printf(MICROPY_ERROR_PRINTER, "callback not callable, unchanged\n");
     } else if (mp_obj_is_callable(callback_in)) {
         *callback = callback_in;
         uint32_t irq = 0;

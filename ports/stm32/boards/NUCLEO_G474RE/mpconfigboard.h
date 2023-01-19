@@ -8,10 +8,11 @@
 #define MICROPY_HW_ENABLE_USB       (0) // A12 (dp), A11 (dm)
 #define MICROPY_HW_HAS_SWITCH       (1)
 #define MICROPY_HW_HAS_FLASH        (0) // QSPI extflash not mounted
+#define MICROPY_ERROR_REPORTING     (MICROPY_ERROR_REPORTING_DETAILED)
 
 #define MICROPY_PY_UASYNCIO         (0)
-#define MICROPY_PY_UZLIB            (0)
-#define MICROPY_PY_UBINASCII        (0)
+#define MICROPY_PY_UZLIB            (1) // needed for rhsell
+#define MICROPY_PY_UBINASCII        (1) // needed for rhsell
 #define MICROPY_PY_UHASHLIB         (0)
 #define MICROPY_PY_UJSON            (0)
 #define MICROPY_PY_URE              (0)

@@ -13,7 +13,7 @@
 #define MICROPY_HW_HAS_FLASH        (1)  // QSPI extflash mounted
 // #define MICROPY_HW_UART_REPL        (1)
 // #define MICROPY_HW_UART_REPL_BAUD   (115200)
-
+#define MICROPY_FROZEN_MANIFEST     ${MICROPY_BOARD_DIR}/manifest.py
 #define MICROPY_BOARD_EARLY_INIT    board_early_init
 void board_early_init(void);
 
@@ -22,6 +22,7 @@ void board_early_init(void);
 #endif
 #define MICROPY_HW_USB_PRODUCT_FS_STRING   MICROPY_HW_BOARD_NAME
 
+#define machine_spi_type machine_hard_spi_type
 
 // // ports/stm32/mpconfigport.h
 // #define MICROPY_PY_LWIP      (0)  // Geen ETH
@@ -33,45 +34,65 @@ void board_early_init(void);
 // #define MICROPY_PY_URE       (0)
 // #define MICROPY_PY_FRAMEBUF  (0)
 // #define MICROPY_PY_USOCKET   (0)
-// #define MICROPY_PY_NETWORK   (0)
+#define MICROPY_PY_NETWORK      (1)
 // #define MICROPY_PERSISTENT_CODE_LOAD (1)
+#define MICROPY_PY_NETWORK_NINAW10 (1)
 
 // The board has an 16MHz HSI, the following gives 170MHz CPU speed and 48MHz for USB
-#define MICROPY_HW_CLK_USE_HSE      (0)
-#define MICROPY_HW_CLK_USE_HSI (1)
-#define MICROPY_HW_CLK_PLLM (4)
-#define MICROPY_HW_CLK_PLLN (85)
-#define MICROPY_HW_CLK_PLLP (2)
-#define MICROPY_HW_CLK_PLLQ (2)
-#define MICROPY_HW_CLK_PLLR (2)
+#define MICROPY_HW_CLK_USE_HSE   (0)
+#define MICROPY_HW_CLK_USE_HSI   (1)
+#define MICROPY_HW_CLK_PLLM      (4)
+#define MICROPY_HW_CLK_PLLN      (85)
+#define MICROPY_HW_CLK_PLLP      (2)
+#define MICROPY_HW_CLK_PLLQ      (2)
+#define MICROPY_HW_CLK_PLLR      (2)
 
-#define MICROPY_HW_CLK_USE_HSI48      (1)
+#define MICROPY_HW_CLK_USE_HSI48 (1)
 #define MICROPY_HW_RCC_HSI48_STATE      (RCC_HSI48_ON)
 #define MICROPY_HW_RCC_USB_CLKSOURCE    (RCC_USBCLKSOURCE_HSI48)
 
 // 4 wait states
-#define MICROPY_HW_FLASH_LATENCY    FLASH_LATENCY_8
+#define MICROPY_HW_FLASH_LATENCY FLASH_LATENCY_8
 
 // UART config
-#define MICROPY_HW_UART4_TX         (pin_C10)
-#define MICROPY_HW_UART4_RX         (pin_C11)
+#define MICROPY_HW_UART4_TX      (pin_C10)
+#define MICROPY_HW_UART4_RX      (pin_C11)
 
 // xSPI
 // SPI1
-#define MICROPY_HW_SPI1_NSS         (pin_A3)
-#define MICROPY_HW_SPI1_SCK         (pin_A5)
-#define MICROPY_HW_SPI1_MISO        (pin_B4)
-#define MICROPY_HW_SPI1_MOSI        (pin_B5)
-// SPI2
-#define MICROPY_HW_SPI2_NSS         (pin_B12)
-#define MICROPY_HW_SPI2_SCK         (pin_B13)
-#define MICROPY_HW_SPI2_MISO        (pin_B14)
-#define MICROPY_HW_SPI2_MOSI        (pin_B15)
+#define MICROPY_HW_SPI1_NSS      (pin_A3)
+#define MICROPY_HW_SPI1_SCK      (pin_A5)
+#define MICROPY_HW_SPI1_MISO     (pin_B4)
+#define MICROPY_HW_SPI1_MOSI     (pin_B5)
+// SPI2 NINA W132
+#define MICROPY_HW_SPI2_NSS      (pin_B12)
+#define MICROPY_HW_SPI2_SCK      (pin_B13)
+#define MICROPY_HW_SPI2_MISO     (pin_B14)
+#define MICROPY_HW_SPI2_MOSI     (pin_B15)
 // //SPI3
-// #define MICROPY_HW_SPI3_NSS         (pin_A15)
-// #define MICROPY_HW_SPI3_SCK         (pin_C10)
-// #define MICROPY_HW_SPI3_MISO        (pin_C11)
-// #define MICROPY_HW_SPI3_MOSI        (pin_C12)
+// #define MICROPY_HW_SPI3_NSS      (pin_A15)
+// #define MICROPY_HW_SPI3_SCK      (pin_C10)
+// #define MICROPY_HW_SPI3_MISO     (pin_C11)
+// #define MICROPY_HW_SPI3_MOSI     (pin_C12)
+
+// WiFi/NINA-W13 config.
+//efine NINA_DEBUG (1)
+#define MICROPY_HW_WIFI_SPI_ID       (2)
+#define MICROPY_HW_WIFI_SPI_BAUDRATE (8 * 1000 * 1000)
+
+// ublox Nina-W13 module config with Arduino fw 1.5.0 fo W10
+#define MICROPY_HW_NINA_RESET        	(pin_C1)  // gpio_32, pc1
+#define MICROPY_HW_NINA_SPI_CSN      	(pin_B12) // gpio_30, pb12
+#define MICROPY_HW_NINA_SPI_DRDY     	(pin_C0)  // gpio_31, pc0
+
+#define MICROPY_HW_NINA_RESET           (pin_C1)  // gpio_32, pc1
+#define MICROPY_HW_NINA_GPIO0           (pin_C2) // not used
+#define MICROPY_HW_NINA_GPIO1           MICROPY_HW_NINA_SPI_CSN
+#define MICROPY_HW_NINA_ACK             MICROPY_HW_NINA_SPI_DRDY
+
+//#define MICROPY_HW_NINA_SPI_NORX     ()  // Not used in SPI only, can be assigned
+//#define MICROPY_HW_NINA_UART_RX      (pin_C10) // gpio_47, uart4_tx, pc10
+//#define MICROPY_HW_NINA_UART_TX      (pin_C11) // gpio_46, uart4_rx, pc11
 
 // QSPI1
 // 8MBit external QSPI flash, used for either the filesystem or XIP memory mapped

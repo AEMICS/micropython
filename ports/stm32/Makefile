@@ -473,6 +473,13 @@ USBDEV_SRC_C += $(addprefix $(USBDEV_DIR)/,\
 	class/src/usbd_msc_scsi.c \
 	)
 
+ifeq ($(MICROPY_PY_NETWORK_NINAW10),1)
+INC += -I$(TOP)/drivers/ninaw10
+SRC_C += drivers/ninaw10/nina_wifi_drv.c \
+         drivers/ninaw10/nina_wifi_bsp.c 
+SRC_C += extmod/network_ninaw10.c
+endif
+
 ifeq ($(MICROPY_SSL_MBEDTLS),1)
 LIB_SRC_C += mbedtls/mbedtls_port.c
 endif

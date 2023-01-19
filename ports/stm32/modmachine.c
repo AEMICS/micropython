@@ -120,6 +120,11 @@ void machine_init(void) {
         reset_cause = PYB_RESET_DEEPSLEEP;
         PWR->CPUCR |= PWR_CPUCR_CSSF;
     } else
+	#elif defined(STM32G4)
+	if (RCC->RCC_SR & RCC_CSR_LPWRRSTF) {
+		// came out of standby or stop mode
+		reset_cause = PYB_RESET_SOFT;
+	} else
     #elif defined(STM32L4)
     if (PWR->SR1 & PWR_SR1_SBF) {
         // came out of standby

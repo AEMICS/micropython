@@ -522,14 +522,14 @@ STATIC void network_ninaw10_socket_close(mod_network_socket_obj_t *socket) {
 
 STATIC int network_ninaw10_socket_bind(mod_network_socket_obj_t *socket, byte *ip, mp_uint_t port, int *_errno) {
     debug_printf("socket_bind(%d, %d)\n", socket->fileno, port);
-    uint8_t type;
+    //uint8_t type = 0;
     switch (socket->type) {
         case MOD_NETWORK_SOCK_STREAM:
-            type = NINA_SOCKET_TYPE_TCP;
+            //type = NINA_SOCKET_TYPE_TCP;
             break;
 
         case MOD_NETWORK_SOCK_DGRAM:
-            type = NINA_SOCKET_TYPE_UDP;
+            //type = NINA_SOCKET_TYPE_UDP;
             break;
 
         default:

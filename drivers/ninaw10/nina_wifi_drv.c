@@ -322,8 +322,9 @@ static int nina_send_command_read_ack(uint32_t cmd, uint32_t nargs, uint32_t wid
     return rval;
 }
 
-static int nina_send_command_read_vals(uint32_t cmd, uint32_t nargs,
-    uint32_t argsw, nina_args_t *args, uint32_t nvals, uint32_t valsw, nina_vals_t *vals) {
+static int nina_send_command_read_vals(uint32_t cmd,
+		uint32_t nargs, uint32_t argsw, nina_args_t *args,
+		uint32_t nvals, uint32_t valsw, nina_vals_t *vals) {
     int ret = 0;
     nina_bsp_atomic_enter();
     if (nina_send_command(cmd, nargs, argsw, args) != 0 ||
@@ -627,6 +628,14 @@ int nina_get_rssi(void) {
     }
 
     return rssi;
+}
+
+int nina_set_debug(uint8_t debug) {
+    if (nina_send_command_read_ack(NINA_CMD_DEBUG_MODE,
+        1, ARG_8BITS, NINA_ARGS(ARG_BYTE(debug))) != SPI_ACK) {
+        return -1;
+    }
+    return 0;
 }
 
 int nina_fw_version(uint8_t *fw_ver) {

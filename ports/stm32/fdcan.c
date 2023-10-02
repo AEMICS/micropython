@@ -156,6 +156,14 @@ bool can_init(pyb_can_obj_t *can_obj, uint32_t mode, uint32_t prescaler, uint32_
             break;
         #endif
 
+        #if defined(MICROPY_HW_CAN3_TX)
+        case PYB_CAN_3:
+            CANx = FDCAN3;
+            pins[0] = MICROPY_HW_CAN3_TX;
+            pins[1] = MICROPY_HW_CAN3_RX;
+            break;
+        #endif
+
         default:
             return false;
     }
@@ -200,18 +208,28 @@ bool can_init(pyb_can_obj_t *can_obj, uint32_t mode, uint32_t prescaler, uint32_
     can_obj->num_bus_off = 0;
 
     switch (can_obj->can_id) {
+        #if defined(MICROPY_HW_CAN1_TX)
         case PYB_CAN_1:
             NVIC_SetPriority(FDCAN1_IT0_IRQn, IRQ_PRI_CAN);
             HAL_NVIC_EnableIRQ(FDCAN1_IT0_IRQn);
             NVIC_SetPriority(FDCAN1_IT1_IRQn, IRQ_PRI_CAN);
             HAL_NVIC_EnableIRQ(FDCAN1_IT1_IRQn);
             break;
+        #endif
         #if defined(MICROPY_HW_CAN2_TX)
         case PYB_CAN_2:
             NVIC_SetPriority(FDCAN2_IT0_IRQn, IRQ_PRI_CAN);
             HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
             NVIC_SetPriority(FDCAN2_IT1_IRQn, IRQ_PRI_CAN);
             HAL_NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
+            break;
+        #endif
+        #if defined(MICROPY_HW_CAN3_TX)
+        case PYB_CAN_3:
+            NVIC_SetPriority(FDCAN3_IT0_IRQn, IRQ_PRI_CAN);
+            HAL_NVIC_EnableIRQ(FDCAN3_IT0_IRQn);
+            NVIC_SetPriority(FDCAN3_IT1_IRQn, IRQ_PRI_CAN);
+            HAL_NVIC_EnableIRQ(FDCAN3_IT1_IRQn);
             break;
         #endif
         default:
@@ -245,6 +263,15 @@ void can_deinit(pyb_can_obj_t *self) {
         HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
         HAL_NVIC_DisableIRQ(FDCAN2_IT1_IRQn);
         // TODO check if FDCAN2 is used.
+        __HAL_RCC_FDCAN_FORCE_RESET();
+        __HAL_RCC_FDCAN_RELEASE_RESET();
+        __HAL_RCC_FDCAN_CLK_DISABLE();
+    #endif
+    #if defined(MICROPY_HW_CAN3_TX)
+    } else if (self->can.Instance == FDCAN3) {
+        HAL_NVIC_DisableIRQ(FDCAN3_IT0_IRQn);
+        HAL_NVIC_DisableIRQ(FDCAN3_IT1_IRQn);
+        // TODO check if FDCAN3 is used.
         __HAL_RCC_FDCAN_FORCE_RESET();
         __HAL_RCC_FDCAN_RELEASE_RESET();
         __HAL_RCC_FDCAN_CLK_DISABLE();
@@ -466,6 +493,20 @@ void FDCAN2_IT1_IRQHandler(void) {
     IRQ_ENTER(FDCAN2_IT1_IRQn);
     can_rx_irq_handler(PYB_CAN_2, FDCAN_RX_FIFO1);
     IRQ_EXIT(FDCAN2_IT1_IRQn);
+}
+#endif
+
+#if defined(MICROPY_HW_CAN3_TX)
+void FDCAN3_IT0_IRQHandler(void) {
+    IRQ_ENTER(FDCAN3_IT0_IRQn);
+    can_rx_irq_handler(PYB_CAN_3, FDCAN_RX_FIFO0);
+    IRQ_EXIT(FDCAN3_IT0_IRQn);
+}
+
+void FDCAN3_IT1_IRQHandler(void) {
+    IRQ_ENTER(FDCAN3_IT1_IRQn);
+    can_rx_irq_handler(PYB_CAN_3, FDCAN_RX_FIFO1);
+    IRQ_EXIT(FDCAN3_IT1_IRQn);
 }
 #endif
 

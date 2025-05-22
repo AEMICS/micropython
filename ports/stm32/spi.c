@@ -243,10 +243,16 @@ static uint32_t spi_get_source_freq(SPI_HandleTypeDef *spi) {
         return HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI3);
     } else if (spi->Instance == SPI4) {
         return HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI4);
+    #if defined(SPI5)
     } else if (spi->Instance == SPI5) {
         return HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI5);
+    #endif
+    #if defined(SPI6)
     } else {
         return HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI6);
+    #endif
+    } else {
+        return HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SPI1);
     }
     #elif defined(STM32H7)
     if (spi->Instance == SPI1 || spi->Instance == SPI2 || spi->Instance == SPI3) {

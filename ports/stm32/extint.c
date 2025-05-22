@@ -442,8 +442,8 @@ void extint_register_pin(const machine_pin_obj_t *pin, uint32_t mode, bool hard_
         #endif
         #if defined(STM32G0) || defined(STM32H5)
         EXTI->EXTICR[line >> 2] =
-            (EXTI->EXTICR[line >> 2] & ~(0x0f << (4 * (line & 0x03))))
-            | ((uint32_t)(GPIO_GET_INDEX(pin->gpio)) << (4 * (line & 0x03)));
+            (EXTI->EXTICR[line >> 2] & ~(0xff << (8 * (line & 0x03))))
+            | ((uint32_t)(GPIO_GET_INDEX(pin->gpio)) << (8 * (line & 0x03)));
         #else
         SYSCFG->EXTICR[line >> 2] =
             (SYSCFG->EXTICR[line >> 2] & ~(0x0f << (4 * (line & 0x03))))
@@ -485,8 +485,8 @@ void extint_set(const machine_pin_obj_t *pin, uint32_t mode) {
         #endif
         #if defined(STM32G0) || defined(STM32H5)
         EXTI->EXTICR[line >> 2] =
-            (EXTI->EXTICR[line >> 2] & ~(0x0f << (4 * (line & 0x03))))
-            | ((uint32_t)(GPIO_GET_INDEX(pin->gpio)) << (4 * (line & 0x03)));
+            (EXTI->EXTICR[line >> 2] & ~(0xff << (8 * (line & 0x03))))
+            | ((uint32_t)(GPIO_GET_INDEX(pin->gpio)) << (8 * (line & 0x03)));
         #else
         SYSCFG->EXTICR[line >> 2] =
             (SYSCFG->EXTICR[line >> 2] & ~(0x0f << (4 * (line & 0x03))))
@@ -678,6 +678,10 @@ static mp_obj_t extint_regs(void) {
     mp_printf(print, "EXTI_FPR1    %08x\n", (unsigned int)EXTI->FPR1);
     mp_printf(print, "EXTI_RPR2    %08x\n", (unsigned int)EXTI->RPR2);
     mp_printf(print, "EXTI_FPR2    %08x\n", (unsigned int)EXTI->FPR2);
+    mp_printf(print, "EXTI_EXTICR1 %08x\n", (unsigned int)EXTI->EXTICR[0]);
+    mp_printf(print, "EXTI_EXTICR2 %08x\n", (unsigned int)EXTI->EXTICR[1]);
+    mp_printf(print, "EXTI_EXTICR3 %08x\n", (unsigned int)EXTI->EXTICR[2]);
+    mp_printf(print, "EXTI_EXTICR4 %08x\n", (unsigned int)EXTI->EXTICR[3]);
     #else
     mp_printf(print, "EXTI_PR1    %08x\n", (unsigned int)EXTI->PR1);
     mp_printf(print, "EXTI_PR2    %08x\n", (unsigned int)EXTI->PR2);

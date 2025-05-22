@@ -91,6 +91,7 @@
 #include "stm32h5xx_hal_sd.h"
 #include "stm32h5xx_hal_sdram.h"
 #include "stm32h5xx_hal_spi.h"
+#include "stm32h5xx_hal_sram.h"
 #include "stm32h5xx_hal_tim.h"
 #include "stm32h5xx_hal_uart.h"
 #include "stm32h5xx_hal_usart.h"

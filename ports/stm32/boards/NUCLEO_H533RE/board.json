@@ -1,0 +1,13 @@
+{
+    "deploy": [
+        "../deploy.md"
+    ],
+    "docs": "",
+    "features": [],
+    "images": [],
+    "mcu": "stm32h5",
+    "product": "Nucleo H533RE",
+    "thumbnail": "",
+    "url": "",
+    "vendor": "ST Microelectronics"
+}
